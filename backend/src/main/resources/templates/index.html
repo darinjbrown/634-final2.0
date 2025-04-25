@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Search for Flights</h2>
+    <form id="flightSearchForm" method="post" action="/api/flights/search">
+        <div class="form-group">
+            <label for="tripType">Trip Type:</label>
+            <select id="tripType" name="tripType" class="form-control">
+                <option value="one-way">One Way</option>
+                <option value="round-trip">Round Trip</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="startingLocation">Starting Location:</label>
+            <input type="text" id="startingLocation" name="startingLocation" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="endingLocation">Ending Location:</label>
+            <input type="text" id="endingLocation" name="endingLocation" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="travelDate">Date of Travel:</label>
+            <input type="date" id="travelDate" name="travelDate" class="form-control" required>
+        </div>
+        <div class="form-group" id="returnDateGroup" style="display: none;">
+            <label for="returnDate">Return Date:</label>
+            <input type="date" id="returnDate" name="returnDate" class="form-control">
+        </div>
+        <div class="form-group">
+            <label for="numberOfTravelers">Number of Travelers:</label>
+            <input type="number" id="numberOfTravelers" name="numberOfTravelers" class="form-control" min="1" value="1" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Search Flights</button>
+    </form>
+    <div id="flightResults" class="mt-4" style="display: none;">
+        <h3>Flight Results:</h3>
+        <ul id="resultsList" class="list-group"></ul>
+    </div>
+</div>
+
+<script>
+    document.getElementById('flightSearchForm').addEventListener('submit', async function(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch('/api/flights/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data), // Convert form data to JSON
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                alert('Error: ' + error);
+                return;
+            }
+
+            const flights = await response.json();
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = '';
+
+            flights.forEach((flight) => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item';
+                listItem.innerHTML = `
+                    <strong>${flight.airline}</strong> - ${flight.flightNumber}<br>
+                    ${flight.departure} to ${flight.arrival}<br>
+                    Departure: ${flight.departureTime}<br>
+                    Arrival: ${flight.arrivalTime}<br>
+                    Price: $${flight.price}
+                `;
+                resultsList.appendChild(listItem);
+            });
+
+            document.getElementById('flightResults').style.display = 'block';
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    });
+</script>
+
+</body>
+</html>
