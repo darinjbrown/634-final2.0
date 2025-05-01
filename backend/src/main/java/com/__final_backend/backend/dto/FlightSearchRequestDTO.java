@@ -13,16 +13,18 @@ import java.time.LocalDate;
  */
 public class FlightSearchRequestDTO {
     /** The starting location/airport code for the flight search */
-    @NotNull(message = "Starting location is required")
+    @NotNull
+    @Size(min = 3, max = 3)
     private String startingLocation;
 
     /** The destination location/airport code for the flight search */
-    @NotNull(message = "Ending location is required")
+    @NotNull
+    @Size(min = 3, max = 3)
     private String endingLocation;
 
     /** The departure date for the flight */
     @JsonFormat(pattern = "yyyy-MM-dd")
-    @NotNull(message = "Travel date is required")
+    @NotNull
     private LocalDate travelDate;
 
     /** The return date for the flight (applicable for round-trip) */
@@ -30,12 +32,11 @@ public class FlightSearchRequestDTO {
     private LocalDate returnDate;
 
     /** The number of passengers traveling */
-    @NotNull(message = "Number of travelers is required")
+    @NotNull
     private Integer numberOfTravelers;
 
     /** The type of trip (e.g., "one-way", "round-trip") */
-    @NotNull(message = "Trip type is required")
-    @Size(min = 1, message = "Trip type must not be empty")
+    @NotNull
     private String tripType;
 
     /**
@@ -144,5 +145,17 @@ public class FlightSearchRequestDTO {
      */
     public void setTripType(String tripType) {
         this.tripType = tripType;
+    }
+
+    @Override
+    public String toString() {
+        return "FlightSearchRequestDTO{" +
+                "startingLocation='" + startingLocation + '\'' +
+                ", endingLocation='" + endingLocation + '\'' +
+                ", travelDate=" + travelDate +
+                ", returnDate=" + returnDate +
+                ", numberOfTravelers=" + numberOfTravelers +
+                ", tripType='" + tripType + '\'' +
+                '}';
     }
 }

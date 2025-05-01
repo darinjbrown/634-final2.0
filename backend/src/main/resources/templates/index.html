@@ -3,97 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <title>Flight Search</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-
-<div class="container mt-5">
-    <h2>Search for Flights</h2>
-    <form id="flightSearchForm" method="post" action="/api/flights/search">
-        <div class="form-group">
-            <label for="tripType">Trip Type:</label>
-            <select id="tripType" name="tripType" class="form-control">
-                <option value="one-way">One Way</option>
-                <option value="round-trip">Round Trip</option>
-            </select>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card shadow-lg border-0">
+                    <div class="card-header bg-primary text-white text-center py-3">
+                        <h3 class="mb-0">Flight Search</h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="flightSearchForm">
+                            <div class="mb-3">
+                                <label for="startingLocation" class="form-label">Starting Location</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="material-icons">flight_takeoff</i></span>
+                                    <input type="text" class="form-control" id="startingLocation" name="startingLocation" placeholder="Enter airport code (e.g., JFK)" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="endingLocation" class="form-label">Ending Location</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="material-icons">flight_land</i></span>
+                                    <input type="text" class="form-control" id="endingLocation" name="endingLocation" placeholder="Enter airport code (e.g., LAX)" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="travelDate" class="form-label">Travel Date</label>
+                                    <input type="date" class="form-control" id="travelDate" name="travelDate" required>
+                                </div>
+                                <div class="col-md-6 mb-3" id="returnDateGroup" style="display:none;">
+                                    <label for="returnDate" class="form-label">Return Date</label>
+                                    <input type="date" class="form-control" id="returnDate" name="returnDate">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="numberOfTravelers" class="form-label">Number of Travelers</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="material-icons">person</i></span>
+                                        <input type="number" class="form-control" id="numberOfTravelers" name="numberOfTravelers" min="1" value="1" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="tripType" class="form-label">Trip Type</label>
+                                    <select class="form-select" id="tripType" name="tripType">
+                                        <option value="one-way">One-Way</option>
+                                        <option value="round-trip">Round-Trip</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2 mt-3">
+                                <i class="material-icons align-middle me-1">search</i> Search Flights
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="flightResults" class="mt-4" style="display:none;">
+                    <div class="card shadow-lg border-0">
+                        <div class="card-header bg-success text-white">
+                            <h4 class="mb-0">Flight Results</h4>
+                        </div>
+                        <div class="card-body">
+                            <ul id="resultsList" class="list-group list-group-flush"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="startingLocation">Starting Location:</label>
-            <input type="text" id="startingLocation" name="startingLocation" class="form-control" required>
-        </div>
-        <div class="form-group">
-            <label for="endingLocation">Ending Location:</label>
-            <input type="text" id="endingLocation" name="endingLocation" class="form-control" required>
-        </div>
-        <div class="form-group">
-            <label for="travelDate">Date of Travel:</label>
-            <input type="date" id="travelDate" name="travelDate" class="form-control" required>
-        </div>
-        <div class="form-group" id="returnDateGroup" style="display: none;">
-            <label for="returnDate">Return Date:</label>
-            <input type="date" id="returnDate" name="returnDate" class="form-control">
-        </div>
-        <div class="form-group">
-            <label for="numberOfTravelers">Number of Travelers:</label>
-            <input type="number" id="numberOfTravelers" name="numberOfTravelers" class="form-control" min="1" value="1" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Search Flights</button>
-    </form>
-    <div id="flightResults" class="mt-4" style="display: none;">
-        <h3>Flight Results:</h3>
-        <ul id="resultsList" class="list-group"></ul>
     </div>
-</div>
-
-<script>
-    document.getElementById('flightSearchForm').addEventListener('submit', async function(event) {
-        event.preventDefault(); // Prevent default form submission
-
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
-
-        try {
-            const response = await fetch('/api/flights/search', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data), // Convert form data to JSON
-            });
-
-            if (!response.ok) {
-                const error = await response.text();
-                alert('Error: ' + error);
-                return;
-            }
-
-            const flights = await response.json();
-            const resultsList = document.getElementById('resultsList');
-            resultsList.innerHTML = '';
-
-            flights.forEach((flight) => {
-                const listItem = document.createElement('li');
-                listItem.className = 'list-group-item';
-                listItem.innerHTML = `
-                    <strong>${flight.airline}</strong> - ${flight.flightNumber}<br>
-                    ${flight.departure} to ${flight.arrival}<br>
-                    Departure: ${flight.departureTime}<br>
-                    Arrival: ${flight.arrivalTime}<br>
-                    Price: $${flight.price}
-                `;
-                resultsList.appendChild(listItem);
-            });
-
-            document.getElementById('flightResults').style.display = 'block';
-        } catch (error) {
-            alert('Error: ' + error.message);
-        }
-    });
-</script>
-
+    
+    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/scripts.js"></script>
 </body>
 </html>

@@ -7,14 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST controller that handles flight-related API endpoints.
@@ -34,13 +33,10 @@ public class FlightController {
 
     /**
      * Searches for flights based on provided search criteria.
-     *
-     * @param request The flight search request containing search parameters such as
-     *                origin, destination, dates, number of travelers, and trip type
-     * @return A response containing a list of flights matching the search criteria
      */
     @PostMapping("/search")
-    public ResponseEntity<List<FlightDTO>> searchFlights(@RequestBody FlightSearchRequestDTO request) {
+    public ResponseEntity<List<FlightDTO>> searchFlights(@RequestBody @Valid FlightSearchRequestDTO request) {
+        logger.info("Searching flights with request: {}", request);
         List<FlightDTO> results = flightService.searchFlights(
                 request.getStartingLocation(),
                 request.getEndingLocation(),

@@ -152,4 +152,17 @@ public class FlightDTO {
     public void setPrice(Double price) {
         this.price = price;
     }
+
+    @Override
+    public String toString() {
+        return "FlightDTO{" +
+                "airline='" + airline + '\'' +
+                ", flightNumber='" + flightNumber + '\'' +
+                ", departure='" + departure + '\'' +
+                ", arrival='" + arrival + '\'' +
+                ", departureTime='" + departureTime + '\'' +
+                ", arrivalTime='" + arrivalTime + '\'' +
+                ", price=" + price +
+                '}';
+    }
 }

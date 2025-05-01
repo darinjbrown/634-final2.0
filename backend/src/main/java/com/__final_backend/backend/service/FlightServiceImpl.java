@@ -24,54 +24,71 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Implementation of the FlightService interface that uses the Amadeus API
- * to search for flight offers and convert them into application-specific DTOs.
- * <p>
- * This service handles communication with the Amadeus flight search API,
- * processes the responses, and maps the data to our internal flight data model.
+ * Implementation of the FlightService interface that handles communication
+ * with the Amadeus Flight Offers Search API.
+ * 
+ * This service provides methods to search for flights, convert API responses
+ * to DTOs, and handle airline information caching.
  */
 @Service
 public class FlightServiceImpl implements FlightService {
 
-    /** Logger for this class */
     private static final Logger logger = LoggerFactory.getLogger(FlightServiceImpl.class);
 
-    /** Amadeus API key from application properties */
     @Value("${amadeus.api.key}")
     private String apiKey;
 
-    /** Amadeus API secret from application properties */
     @Value("${amadeus.api.secret}")
     private String apiSecret;
 
-    /** Cache to store airline codes and their corresponding names */
+    /**
+     * Cache for airline names to reduce API calls for repeated airline codes.
+     * Key: Airline code (e.g., "BA")
+     * Value: Airline name (e.g., "British Airways")
+     */
     private Map<String, String> airlineCache = new HashMap<>();
 
     /**
-     * Creates and returns an Amadeus API client with configured credentials.
-     *
-     * @return An initialized Amadeus client
+     * Singleton instance of the Amadeus API client
      */
-    protected Amadeus getAmadeusClient() {
-        return Amadeus.builder(apiKey, apiSecret).build();
+    private Amadeus amadeusClient;
+
+    /**
+     * Gets or creates the Amadeus API client in a thread-safe manner.
+     * Uses the test environment for development and testing purposes.
+     * 
+     * @return Configured Amadeus client instance
+     */
+    protected synchronized Amadeus getAmadeusClient() {
+        if (amadeusClient != null) {
+            return amadeusClient;
+        }
+
+        // Test environment is free tier and sufficient for this project
+        amadeusClient = Amadeus.builder(apiKey, apiSecret)
+                .setHostname("test")
+                .setLogLevel("debug") // Keep debug for troubleshooting
+                .setSsl(true) // Ensure SSL is enabled
+                .build();
+
+        logger.info("Amadeus client created with test environment");
+        return amadeusClient;
     }
 
     /**
-     * Searches for flights based on the provided parameters using the Amadeus API.
-     * <p>
-     * This method validates input parameters, builds the API request, executes it,
-     * and processes the response into a list of FlightDTO objects.
-     *
-     * @param startingLocation  The origin airport code
-     * @param endingLocation    The destination airport code
-     * @param travelDate        The departure date
-     * @param returnDate        The return date (for round-trip flights)
-     * @param numberOfTravelers The number of adult passengers
-     * @param tripType          The type of trip ("one-way" or "round-trip")
-     * @return A list of FlightDTO objects matching the search criteria
-     * @throws IllegalArgumentException If required parameters are missing
-     * @throws RuntimeException         If there is an API error or unexpected
-     *                                  exception
+     * Searches for flights based on the provided parameters.
+     * 
+     * @param startingLocation  The 3-letter IATA code of the departure airport/city
+     * @param endingLocation    The 3-letter IATA code of the arrival airport/city
+     * @param travelDate        The date of departure
+     * @param returnDate        The date of return (for round trips only)
+     * @param numberOfTravelers The number of adult travelers
+     * @param tripType          The type of trip, either "one-way" or "round-trip"
+     * @return List of FlightDTO objects representing matching flights
+     * @throws IllegalArgumentException if required parameters are invalid or
+     *                                  missing
+     * @throws RuntimeException         if there's an error communicating with the
+     *                                  Amadeus API
      */
     @Override
     public List<FlightDTO> searchFlights(
@@ -81,68 +98,61 @@ public class FlightServiceImpl implements FlightService {
             LocalDate returnDate,
             Integer numberOfTravelers,
             String tripType) {
+
         try {
-            // Validate mandatory parameters
-            if (startingLocation == null || endingLocation == null || travelDate == null || numberOfTravelers == null) {
-                logger.error("Missing required parameters for flight search");
+            // Parameter validation
+            if (startingLocation == null || !startingLocation.matches("[A-Z]{3}") ||
+                    endingLocation == null || !endingLocation.matches("[A-Z]{3}") ||
+                    travelDate == null || numberOfTravelers == null || numberOfTravelers < 1) {
                 throw new IllegalArgumentException(
-                        "Missing required parameters: originLocationCode, destinationLocationCode, departureDate, and adults are mandatory");
+                        "Invalid parameters: origin, destination, date and adults are required");
             }
 
-            logger.info("Searching flights from {} to {} on {}", startingLocation, endingLocation, travelDate);
-
+            // Get API client
             Amadeus amadeus = getAmadeusClient();
 
-            // Build mandatory search parameters
+            // Build params for the API call
             Params params = Params.with("originLocationCode", startingLocation)
                     .and("destinationLocationCode", endingLocation)
                     .and("departureDate", travelDate.toString())
-                    .and("adults", numberOfTravelers.toString());
+                    .and("adults", numberOfTravelers.toString())
+                    .and("max", "20")
+                    .and("currencyCode", "USD"); // Add currency for better results
 
-            // Add optional parameters
-            if (returnDate != null && "round-trip".equalsIgnoreCase(tripType)) {
+            if (returnDate != null && "round-trip".equals(tripType)) {
                 params.and("returnDate", returnDate.toString());
             }
 
-            // Add additional parameters to improve results
-            params.and("max", "20")
-                    .and("currencyCode", "USD")
-                    .and("nonStop", "true");
+            // To add non-stop filter, uncomment the following line:
+            // params.and("nonStop", "true");
 
-            // Execute GET API call
-            FlightOfferSearch[] flightOffersSearches = amadeus.shopping.flightOffersSearch.get(params);
+            // Log the full request parameters for debugging
+            logger.info("Searching flights with params: {}", params);
 
-            logger.info("Retrieved {} flight offers", flightOffersSearches.length);
-
-            if (flightOffersSearches.length == 0) {
-                logger.warn("No flights found for the specified criteria");
-                return new ArrayList<>();
+            // Make the API call with more detailed error handling
+            try {
+                FlightOfferSearch[] flightOffersSearches = amadeus.shopping.flightOffersSearch.get(params);
+                logger.info("Successfully retrieved {} flight offers", flightOffersSearches.length);
+                return mapToFlightDTOs(flightOffersSearches, amadeus);
+            } catch (ResponseException e) {
+                logger.error("Amadeus API error: {}", e);
+                logger.error("Error details - Code: {}, Error: {}, Description: {}",
+                        e.getCode(), e.getMessage(), e.getDescription());
+                throw new RuntimeException("Error from Amadeus API: " + e.getMessage(), e);
             }
-
-            // Process the flight offers
-            return mapToFlightDTOs(flightOffersSearches, amadeus);
-
-        } catch (ResponseException e) {
-            logger.error("Amadeus API error: {} - {}", e.getCode(), e.getMessage(), e);
-            throw new RuntimeException("Failed to fetch flight data: " + e.getMessage(), e);
         } catch (Exception e) {
-            logger.error("Unexpected error in flight search: {}", e.getMessage(), e);
-            throw new RuntimeException("Unexpected error in flight search", e);
+            logger.error("Error searching flights: {}", e.getMessage());
+            throw new RuntimeException("Error searching flights: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Maps Amadeus FlightOfferSearch objects to application-specific FlightDTO
-     * objects.
-     * <p>
-     * This method:
-     * 1. Extracts airline codes from flight offers
-     * 2. Loads airline names for these codes
-     * 3. Maps flight segment data to FlightDTO objects
-     *
-     * @param flightOffers Array of flight offers from Amadeus API
-     * @param amadeus      The Amadeus client to fetch additional data
-     * @return List of FlightDTO objects with mapped flight information
+     * Converts FlightOfferSearch objects from the Amadeus API to FlightDTO objects
+     * that can be consumed by the frontend.
+     * 
+     * @param flightOffers Array of FlightOfferSearch objects from Amadeus API
+     * @param amadeus      The Amadeus client for fetching airline information
+     * @return List of FlightDTO objects with flight details
      */
     private List<FlightDTO> mapToFlightDTOs(FlightOfferSearch[] flightOffers, Amadeus amadeus) {
         List<FlightDTO> flightDTOs = new ArrayList<>();
@@ -189,13 +199,11 @@ public class FlightServiceImpl implements FlightService {
     }
 
     /**
-     * Loads airline names for a set of airline codes using Amadeus API.
-     * <p>
-     * This method queries the Amadeus API for each airline code and stores
-     * the results in the airline cache for future use.
-     *
-     * @param airlineCodes Set of airline codes to lookup
-     * @param amadeus      The Amadeus client to use for lookups
+     * Fetches airline names for a set of airline codes and caches the results.
+     * If an airline name cannot be fetched, the code itself is stored in the cache.
+     * 
+     * @param airlineCodes Set of airline IATA codes to fetch names for
+     * @param amadeus      The Amadeus client for making API calls
      */
     private void loadAirlineNames(Set<String> airlineCodes, Amadeus amadeus) {
         for (String code : airlineCodes) {
@@ -221,14 +229,13 @@ public class FlightServiceImpl implements FlightService {
     }
 
     /**
-     * Extracts a formatted time string (HH:mm) from a datetime string.
-     * <p>
-     * This method attempts to parse the input string as a ZonedDateTime or
-     * LocalDateTime,
-     * and falls back to direct string manipulation if parsing fails.
-     *
-     * @param dateTimeString The datetime string to extract time from
-     * @return A formatted time string in "HH:mm" format
+     * Extracts a formatted time string (HH:mm) from an ISO datetime string.
+     * Handles different datetime formats including those with and without
+     * timezones.
+     * 
+     * @param dateTimeString The datetime string to extract time from (e.g.,
+     *                       "2025-05-01T14:30:00")
+     * @return A formatted time string (e.g., "14:30") or "N/A" if parsing fails
      */
     private String extractTimeFromDateTime(String dateTimeString) {
         if (dateTimeString == null || dateTimeString.isEmpty()) {
@@ -247,6 +254,28 @@ public class FlightServiceImpl implements FlightService {
             } catch (DateTimeParseException e2) {
                 return dateTimeString.substring(11, 16); // Try to extract time part directly
             }
+        }
+    }
+
+    /**
+     * Advanced search method that allows direct access to all Amadeus API
+     * parameters.
+     * Useful for complex queries that require parameters not exposed in the
+     * standard search method.
+     * 
+     * @param params Amadeus Params object containing all search parameters
+     * @return Array of FlightOfferSearch objects from Amadeus API
+     * @throws RuntimeException if there's an error communicating with the Amadeus
+     *                          API
+     */
+    @Override
+    public FlightOfferSearch[] searchFlightsWithParams(Params params) {
+        try {
+            Amadeus amadeus = getAmadeusClient();
+            return amadeus.shopping.flightOffersSearch.get(params);
+        } catch (ResponseException e) {
+            logger.error("Amadeus API error in searchFlightsWithParams: {} - {}", e.getCode(), e.getMessage());
+            throw new RuntimeException("Error from Amadeus API: " + e.getMessage(), e);
         }
     }
 }
