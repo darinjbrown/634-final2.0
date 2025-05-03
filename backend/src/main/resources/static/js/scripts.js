@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
 	const resultsList = document.getElementById('resultsList');
 	const searchButton = document.querySelector('button[type="submit"]');
 
+	// Create toast container if it doesn't exist
+	createToastContainer();
+
 	// Toggle return date visibility based on trip type
 	tripType.addEventListener('change', () => {
 		if (tripType.value === 'round-trip') {
@@ -43,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			if (!response.ok) {
 				const error = await response.text();
-				showError('Error: ' + error);
+				showToast('Error: ' + error, 'error');
 				return;
 			}
 
@@ -53,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			if (flights.length === 0) {
 				resultsList.innerHTML =
 					'<li class="list-group-item text-center py-4">No flights found matching your criteria.</li>';
+				showToast('No flights found matching your criteria.', 'info');
 			} else {
 				flights.forEach((flight) => {
 					const listItem = document.createElement('li');
@@ -78,6 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
 					`;
 					resultsList.appendChild(listItem);
 				});
+
+				// Show success toast with the number of flights found
+				showToast(
+					`Found ${flights.length} flights matching your criteria.`,
+					'success'
+				);
 			}
 
 			flightResults.style.display = 'block';
@@ -85,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Scroll to results
 			flightResults.scrollIntoView({ behavior: 'smooth' });
 		} catch (error) {
-			showError('Error: ' + error.message);
+			showToast('Error: ' + error.message, 'error');
 			// Reset button state
 			searchButton.innerHTML =
 				'<i class="material-icons align-middle me-1">search</i> Search Flights';
@@ -93,23 +103,71 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	});
 
-	// Helper function to show errors
-	function showError(message) {
-		// Create error element if it doesn't exist
-		let errorElement = document.getElementById('searchError');
-		if (!errorElement) {
-			errorElement = document.createElement('div');
-			errorElement.id = 'searchError';
-			errorElement.className = 'alert alert-danger mt-3';
-			errorElement.role = 'alert';
-			flightSearchForm.insertAdjacentElement('afterend', errorElement);
+	// Create toast container
+	function createToastContainer() {
+		const toastContainer = document.createElement('div');
+		toastContainer.className =
+			'toast-container position-fixed bottom-0 end-0 p-3';
+		toastContainer.id = 'toastContainer';
+		document.body.appendChild(toastContainer);
+	}
+
+	// Function to show toast messages
+	function showToast(message, type = 'info') {
+		const toastContainer = document.getElementById('toastContainer');
+		const toast = document.createElement('div');
+		const id = 'toast-' + Date.now();
+
+		// Set toast classes based on type
+		let bgClass, iconName;
+		switch (type) {
+			case 'success':
+				bgClass = 'bg-success text-white';
+				iconName = 'check_circle';
+				break;
+			case 'error':
+				bgClass = 'bg-danger text-white';
+				iconName = 'error';
+				break;
+			case 'warning':
+				bgClass = 'bg-warning';
+				iconName = 'warning';
+				break;
+			default:
+				bgClass = 'bg-info text-white';
+				iconName = 'info';
 		}
 
-		errorElement.textContent = message;
+		toast.className = `toast ${bgClass} border-0 show`;
+		toast.id = id;
+		toast.setAttribute('role', 'alert');
+		toast.setAttribute('aria-live', 'assertive');
+		toast.setAttribute('aria-atomic', 'true');
 
-		// Auto-hide after 5 seconds
-		setTimeout(() => {
-			errorElement.remove();
-		}, 5000);
+		toast.innerHTML = `
+			<div class="toast-header ${bgClass} border-0">
+				<i class="material-icons me-2">${iconName}</i>
+				<strong class="me-auto">Flight Search</strong>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+			</div>
+			<div class="toast-body">
+				${message}
+			</div>
+		`;
+
+		toastContainer.appendChild(toast);
+
+		// Initialize Bootstrap toast
+		const bsToast = new bootstrap.Toast(toast, {
+			autohide: true,
+			delay: 5000,
+		});
+
+		bsToast.show();
+
+		// Remove toast from DOM after it's hidden
+		toast.addEventListener('hidden.bs.toast', () => {
+			toast.remove();
+		});
 	}
 });
