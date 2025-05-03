@@ -117,14 +117,13 @@ public class FlightServiceImpl implements FlightService {
                     .and("departureDate", travelDate.toString())
                     .and("adults", numberOfTravelers.toString())
                     .and("max", "20")
-                    .and("currencyCode", "USD"); // Add currency for better results
+                    .and("currencyCode", "USD") // Add currency for better results
+                    .and("nonStop", "true"); // Filter for non-stop flights only
 
             if (returnDate != null && "round-trip".equals(tripType)) {
-                params.and("returnDate", returnDate.toString());
+                params.and("returnDate", returnDate.toString())
+                        .and("nonStop", "true");
             }
-
-            // To add non-stop filter, uncomment the following line:
-            // params.and("nonStop", "true");
 
             // Log the full request parameters for debugging
             logger.info("Searching flights with params: {}", params);

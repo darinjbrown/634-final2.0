@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			if (!response.ok) {
 				const error = await response.text();
-				showToast('Error: ' + error, 'error');
+				showToast('There was an error retrieving flights');
 				return;
 			}
 
