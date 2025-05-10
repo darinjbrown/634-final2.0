@@ -17,24 +17,23 @@ import java.util.Collections;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+  public CustomUserDetailsService(UserRepository userRepository) {
+    this.userRepository = userRepository;
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+  @Override
+  @Transactional(readOnly = true)
+  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    User user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        // For simplicity, we're giving all users a basic "USER" role
-        // In a more complex application, you'd retrieve roles from the database
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPasswordHash(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-        );
-    }
+    // For simplicity, we're giving all users a basic "USER" role
+    // In a more complex application, you'd retrieve roles from the database
+    return new org.springframework.security.core.userdetails.User(
+        user.getUsername(),
+        user.getPasswordHash(),
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+  }
 }

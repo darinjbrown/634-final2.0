@@ -3,6 +3,8 @@ package com.__final_backend.backend.config;
 import com.__final_backend.backend.security.JwtAuthenticationEntryPoint;
 import com.__final_backend.backend.security.JwtAuthenticationFilter;
 import com.__final_backend.backend.security.JwtTokenUtil;
+import com.__final_backend.backend.security.RememberMeAuthenticationFilter;
+import com.__final_backend.backend.service.AuthService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,10 +35,14 @@ public class SecurityConfig {
 
     private final JwtTokenUtil jwtTokenUtil;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final AuthService authService;
 
-    public SecurityConfig(JwtTokenUtil jwtTokenUtil, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
+    public SecurityConfig(JwtTokenUtil jwtTokenUtil,
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            AuthService authService) {
         this.jwtTokenUtil = jwtTokenUtil;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.authService = authService;
     }
 
     @Bean
@@ -50,7 +56,7 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers("/", "/index.html", "/static/**", "/h2-console/**").permitAll()
                         .requestMatchers("/api/flights/**", "/api/airports/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
                         // Swagger/OpenAPI endpoints
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Database endpoints requiring authentication
@@ -63,8 +69,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .headers(headers -> headers.frameOptions().sameOrigin()); // For H2 console
 
-        // Add JWT token filter
+        // Add JWT and Remember-Me filters
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(rememberMeAuthenticationFilter(), JwtAuthenticationFilter.class);
 
         return http.build();
     }
@@ -72,6 +79,11 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtTokenUtil);
+    }
+
+    @Bean
+    public RememberMeAuthenticationFilter rememberMeAuthenticationFilter() {
+        return new RememberMeAuthenticationFilter(authService);
     }
 
     @Bean
@@ -93,7 +105,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(true); // Important for cookies
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
