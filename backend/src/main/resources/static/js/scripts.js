@@ -1,4 +1,15 @@
+/**
+ * SkyExplorer Flight Search Application - Main JavaScript File
+ *
+ * This script handles the core frontend functionality of the SkyExplorer application including:
+ * - Flight search form submission and result display
+ * - Flight saving (individual and batch)
+ * - Authentication state checking
+ * - UI elements like toasts and modals
+ * - Responsive interaction with the backend API
+ */
 document.addEventListener('DOMContentLoaded', () => {
+	// DOM element references for interactive components
 	const tripType = document.getElementById('tripType');
 	const returnDateGroup = document.getElementById('returnDateGroup');
 	const flightSearchForm = document.getElementById('flightSearchForm');
@@ -8,13 +19,18 @@ document.addEventListener('DOMContentLoaded', () => {
 	const saveAllFlightsBtn = document.getElementById('saveAllFlightsBtn');
 	const loginModal = document.getElementById('loginModal');
 
-	// Store search results for save all functionality
+	// Store search results for save all functionality and sorting
 	let currentSearchResults = [];
 
-	// Create toast container if it doesn't exist
+	/**
+	 * Initialize toast notification container for displaying feedback to the user
+	 */
 	createToastContainer();
 
-	// Toggle return date visibility based on trip type
+	/**
+	 * Toggle return date field visibility based on one-way or round-trip selection
+	 * Hides the return date when one-way is selected, shows it for round-trip
+	 */
 	tripType.addEventListener('change', () => {
 		if (tripType.value === 'round-trip') {
 			returnDateGroup.style.display = 'block';
@@ -23,11 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	});
 
-	// Process form submission
+	/**
+	 * Process flight search form submission using async/await pattern
+	 * Sends search criteria to the backend API and displays results
+	 */
 	flightSearchForm.addEventListener('submit', async (event) => {
 		event.preventDefault();
 
-		// Show loading spinner
+		// Show loading spinner to indicate search in progress
 		searchButton.innerHTML =
 			'<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Searching...';
 		searchButton.disabled = true;
@@ -35,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const formData = new FormData(flightSearchForm);
 
 		try {
-			// Use POST method to send form data
+			// Send flight search request to backend API
 			const response = await fetch('/api/flights/search', {
 				method: 'POST',
 				headers: {
@@ -44,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				body: JSON.stringify(Object.fromEntries(formData)),
 			});
 
-			// Reset button state
+			// Reset search button to original state
 			searchButton.innerHTML =
 				'<i class="material-icons align-middle me-1">search</i> Search Flights';
 			searchButton.disabled = false;
@@ -57,9 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			const flights = await response.json();
 			resultsList.innerHTML = '';
-			currentSearchResults = flights; // Store the search results
+			currentSearchResults = flights; // Store the search results for later use
 
-			// Check if user is logged in to show save options
+			// Check authentication status to show/hide save options
 			const isAuthenticated = isUserAuthenticated();
 			if (isAuthenticated && flights.length > 0) {
 				saveAllFlightsBtn.style.display = 'inline-block';
@@ -68,10 +87,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 
 			if (flights.length === 0) {
+				// Handle case when no flights are found
 				resultsList.innerHTML =
 					'<li class="list-group-item text-center py-4">No flights found matching your criteria.</li>';
 				showToast('No flights found matching your criteria.', 'info');
 			} else {
+				// Create flight result cards for each flight returned
 				flights.forEach((flight, index) => {
 					const listItem = document.createElement('li');
 					listItem.className = 'list-group-item';
@@ -102,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					resultsList.appendChild(listItem);
 				});
 
-				// Add event listeners to save buttons
+				// Add event listeners to individual flight save buttons
 				document.querySelectorAll('.save-flight-btn').forEach((btn) => {
 					btn.addEventListener('click', handleSaveFlight);
 				});
@@ -114,9 +135,10 @@ document.addEventListener('DOMContentLoaded', () => {
 				);
 			}
 
+			// Display the results section
 			flightResults.style.display = 'block';
 
-			// Scroll to results
+			// Smoothly scroll to the results section
 			flightResults.scrollIntoView({ behavior: 'smooth' });
 		} catch (error) {
 			showToast('Error: ' + error.message, 'error');
@@ -127,33 +149,38 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	});
 
-	// Add event listener for Save All Flights button
+	/**
+	 * Set up "Save All Flights" button click handler if the button exists
+	 */
 	if (saveAllFlightsBtn) {
 		saveAllFlightsBtn.addEventListener('click', handleSaveAllFlights);
 	}
 
-	// Sort button functionality
+	/**
+	 * Configure price sorting functionality for flight results
+	 * Allows users to toggle between ascending and descending price order
+	 */
 	const sortPriceBtn = document.getElementById('sortPriceBtn');
 	if (sortPriceBtn) {
 		sortPriceBtn.addEventListener('click', () => {
 			if (currentSearchResults.length === 0) return;
 
-			// Toggle sort order
+			// Toggle sort order between ascending and descending
 			sortPriceBtn.dataset.order =
 				sortPriceBtn.dataset.order === 'asc' ? 'desc' : 'asc';
 			const order = sortPriceBtn.dataset.order;
 
-			// Sort the current results
+			// Sort the current results array based on flight price
 			currentSearchResults.sort((a, b) => {
 				const priceA = parseFloat(a.price);
 				const priceB = parseFloat(b.price);
 				return order === 'asc' ? priceA - priceB : priceB - priceA;
 			});
 
-			// Update the UI with sorted results
+			// Update the UI with the sorted results
 			updateFlightResults(currentSearchResults);
 
-			// Update button text to indicate sort order
+			// Update button text to indicate current sort order
 			sortPriceBtn.innerHTML = `
 				<i class="material-icons align-middle">${
 					order === 'asc' ? 'arrow_upward' : 'arrow_downward'
@@ -163,12 +190,21 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 
-	// Check if user is authenticated
+	/**
+	 * Check if the user is currently authenticated based on JWT token presence
+	 *
+	 * @returns {boolean} True if a JWT token exists in localStorage, false otherwise
+	 */
 	function isUserAuthenticated() {
 		return localStorage.getItem('jwtToken') !== null;
 	}
 
-	// Get auth headers for API requests
+	/**
+	 * Prepare authorization headers for API requests
+	 * Includes the JWT token if the user is authenticated
+	 *
+	 * @returns {Object} Headers object with Content-Type and optional Authorization
+	 */
 	function getAuthHeaders() {
 		const headers = {
 			'Content-Type': 'application/json',
@@ -182,26 +218,33 @@ document.addEventListener('DOMContentLoaded', () => {
 		return headers;
 	}
 
-	// Handle saving a single flight
+	/**
+	 * Handle saving an individual flight
+	 * Checks authentication status and shows login modal if not authenticated
+	 *
+	 * @param {Event} event - The click event from the save button
+	 */
 	async function handleSaveFlight(event) {
 		event.preventDefault();
 
-		// Check if user is authenticated
+		// Redirect to login if user is not authenticated
 		if (!isUserAuthenticated()) {
-			// Show login modal
+			// Show login modal instead of direct page navigation
 			const bsLoginModal = new bootstrap.Modal(loginModal);
 			bsLoginModal.show();
 			return;
 		}
 
+		// Get the flight data from the currentSearchResults array
 		const index = parseInt(event.currentTarget.getAttribute('data-index'));
 		const flight = currentSearchResults[index];
 
 		try {
+			// Call the API to save the flight
 			const saveResponse = await saveFlight(flight);
 			if (saveResponse.success) {
 				showToast('Flight saved successfully!', 'success');
-				// Update button to indicate flight is saved
+				// Update button appearance to indicate flight is saved
 				event.currentTarget.innerHTML = `
 					<i class="material-icons align-middle" style="font-size: 16px;">favorite</i> Saved
 				`;
@@ -219,7 +262,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
-	// Handle saving all flights
+	/**
+	 * Handle saving all currently displayed flights
+	 * Checks authentication status and processes all flights in parallel
+	 *
+	 * @param {Event} event - The click event from the "Save All" button
+	 */
 	async function handleSaveAllFlights(event) {
 		event.preventDefault();
 
@@ -281,7 +329,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
-	// API call to save a flight
+	/**
+	 * Make API call to save a single flight to the user's saved flights
+	 *
+	 * @param {Object} flight - Flight data object to save
+	 * @returns {Object} Response object with success flag and data or error message
+	 */
 	async function saveFlight(flight) {
 		try {
 			const response = await fetch('/api/saved-flights', {
@@ -327,7 +380,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
-	// Update flight results in the UI
+	/**
+	 * Update the flight results display in the UI with new or sorted flight data
+	 * Recreates all flight cards and reattaches event listeners
+	 *
+	 * @param {Array} flights - Array of flight objects to display
+	 */
 	function updateFlightResults(flights) {
 		resultsList.innerHTML = '';
 
@@ -367,7 +425,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 
-	// Create toast container
+	/**
+	 * Create the toast container for notifications if it doesn't already exist
+	 * Appends a fixed-position container to the bottom-right corner of the page
+	 */
 	function createToastContainer() {
 		const toastContainer = document.createElement('div');
 		toastContainer.className =
@@ -376,7 +437,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		document.body.appendChild(toastContainer);
 	}
 
-	// Function to show toast messages
+	/**
+	 * Display a toast notification to the user
+	 * Supports different types: info, success, error, warning
+	 *
+	 * @param {string} message - The message to display in the toast
+	 * @param {string} type - The type of toast determining its color and icon
+	 */
 	function showToast(message, type = 'info') {
 		const toastContainer = document.getElementById('toastContainer');
 		const toast = document.createElement('div');
@@ -435,3 +502,127 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 });
+
+/**
+ * Global function to handle flight search form submission
+ * Used when the form has an onsubmit attribute in HTML
+ * Provides alternative submission method to the event listener
+ *
+ * @param {Event} event - The form submission event
+ * @returns {boolean} Always returns false to prevent default form submission
+ */
+function handleFlightSearch(event) {
+	event.preventDefault();
+
+	const flightSearchForm = document.getElementById('flightSearchForm');
+	const searchButton = document.querySelector('button[type="submit"]');
+
+	// Show loading spinner
+	searchButton.innerHTML =
+		'<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Searching...';
+	searchButton.disabled = true;
+
+	const formData = new FormData(flightSearchForm);
+
+	fetch('/api/flights/search', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify(Object.fromEntries(formData)),
+	})
+		.then((response) => {
+			// Reset button state
+			searchButton.innerHTML =
+				'<i class="material-icons align-middle me-1">search</i> Search Flights';
+			searchButton.disabled = false;
+
+			if (!response.ok) {
+				return response.text().then((error) => {
+					showToast('There was an error retrieving flights');
+					throw new Error(error);
+				});
+			}
+			return response.json();
+		})
+		.then((flights) => {
+			// Process flight results - reusing the same logic as in the event listener
+			const resultsList = document.getElementById('resultsList');
+			const flightResults = document.getElementById('flightResults');
+			const saveAllFlightsBtn =
+				document.getElementById('saveAllFlightsBtn');
+
+			resultsList.innerHTML = '';
+			currentSearchResults = flights;
+
+			// Check if user is logged in to show save options
+			const isAuthenticated = isUserAuthenticated();
+			if (isAuthenticated && flights.length > 0) {
+				saveAllFlightsBtn.style.display = 'inline-block';
+			} else {
+				saveAllFlightsBtn.style.display = 'none';
+			}
+
+			if (flights.length === 0) {
+				resultsList.innerHTML =
+					'<li class="list-group-item text-center py-4">No flights found matching your criteria.</li>';
+				showToast('No flights found matching your criteria.', 'info');
+			} else {
+				flights.forEach((flight, index) => {
+					const listItem = document.createElement('li');
+					listItem.className = 'list-group-item';
+					listItem.innerHTML = `
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<h5 class="mb-0 text-primary">
+							<i class="material-icons align-middle me-2" style="font-size: 18px;">flight</i>
+							<strong>${flight.airline}</strong> - ${flight.flightNumber}
+						</h5>
+						<span class="badge bg-primary rounded-pill">$${flight.price}</span>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="mb-1"><strong>From:</strong> ${flight.departure}</div>
+							<div><strong>Departure:</strong> ${flight.departureTime}</div>
+						</div>
+						<div class="col-md-6">
+							<div class="mb-1"><strong>To:</strong> ${flight.arrival}</div>
+							<div><strong>Arrival:</strong> ${flight.arrivalTime}</div>
+						</div>
+					</div>
+					<div class="mt-2 text-end">
+						<button class="btn btn-sm btn-outline-primary save-flight-btn" data-index="${index}">
+							<i class="material-icons align-middle" style="font-size: 16px;">favorite_border</i> Save Flight
+						</button>
+					</div>
+				`;
+					resultsList.appendChild(listItem);
+				});
+
+				// Add event listeners to save buttons
+				document.querySelectorAll('.save-flight-btn').forEach((btn) => {
+					btn.addEventListener('click', handleSaveFlight);
+				});
+
+				// Show success toast with the number of flights found
+				showToast(
+					`Found ${flights.length} flights matching your criteria.`,
+					'success'
+				);
+			}
+
+			flightResults.style.display = 'block';
+
+			// Scroll to results
+			flightResults.scrollIntoView({ behavior: 'smooth' });
+		})
+		.catch((error) => {
+			showToast('Error: ' + error.message, 'error');
+			// Reset button state
+			searchButton.innerHTML =
+				'<i class="material-icons align-middle me-1">search</i> Search Flights';
+			searchButton.disabled = false;
+		});
+
+	// Return false to prevent the default form submission
+	return false;
+}

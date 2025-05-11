@@ -1,31 +1,43 @@
 /**
- * Login form handling
+ * SkyExplorer Login Form Handler
+ *
+ * This script manages the login form functionality including:
+ * - Form submission via AJAX
+ * - JWT token storage
+ * - Login error handling
+ * - Success/failure notifications
+ * - URL parameter processing for login-related messages
  */
 document.addEventListener('DOMContentLoaded', function () {
-	// Get form elements
+	// Get form elements for interaction
 	const loginForm = document.getElementById('loginForm');
 	const loginError = document.getElementById('loginError');
 
-	// Handle form submission
+	/**
+	 * Set up the login form submission handler
+	 * Prevents default form submission and uses fetch API instead
+	 */
 	if (loginForm) {
 		loginForm.addEventListener('submit', function (event) {
 			event.preventDefault();
 
-			// Collect form data
+			// Collect form data for the login request
 			const formData = {
 				username: document.getElementById('username').value,
 				password: document.getElementById('password').value,
 				rememberMe: document.getElementById('rememberMe').checked,
 			};
 
-			// Call the API to authenticate the user
+			// Attempt user authentication
 			loginUser(formData);
 		});
 	}
 
 	/**
-	 * Login a user via API
-	 * @param {Object} userData - The user login data
+	 * Authenticate user via the backend API
+	 * Sends credentials to the server and handles the JWT token response
+	 *
+	 * @param {Object} userData - User credentials with username, password and rememberMe flag
 	 */
 	function loginUser(userData) {
 		fetch('/api/auth/login', {
@@ -44,10 +56,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			})
 			.then((data) => {
 				if (data.token) {
-					// Store token in localStorage for subsequent requests
+					// Store JWT token in localStorage for authentication
 					localStorage.setItem('jwtToken', data.token);
 
-					// Redirect to home page or previous page if available
+					// Redirect to home page or the page specified in the redirect parameter
 					const redirect = new URLSearchParams(
 						window.location.search
 					).get('redirect');
@@ -65,7 +77,9 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	/**
-	 * Display an error message
+	 * Display an error message to the user
+	 * Creates or updates the error alert element
+	 *
 	 * @param {string} message - The error message to display
 	 */
 	function showError(message) {
@@ -73,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			loginError.textContent = message;
 			loginError.style.display = 'block';
 
-			// Auto-hide after 5 seconds
+			// Auto-hide the error message after 5 seconds
 			setTimeout(() => {
 				loginError.style.display = 'none';
 			}, 5000);
@@ -81,7 +95,9 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	/**
-	 * Display a success message
+	 * Display a success message to the user
+	 * Creates or updates the success alert element
+	 *
 	 * @param {string} message - The success message to display
 	 */
 	function showSuccess(message) {
@@ -92,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			successAlert.id = 'loginSuccess';
 			successAlert.className = 'alert alert-success';
 
-			// Insert before the form
+			// Insert before the form for better visibility
 			loginForm.parentNode.insertBefore(successAlert, loginForm);
 		}
 
@@ -106,15 +122,19 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	/**
-	 * Check URL parameters for messages
+	 * Process URL parameters for login-related messages
+	 * Handles error messages, registration confirmation, and logout notifications
+	 * from redirects to the login page
 	 */
 	function checkUrlParams() {
 		const urlParams = new URLSearchParams(window.location.search);
 
+		// Show error message if present in URL
 		if (urlParams.has('error')) {
 			showError(urlParams.get('error'));
 		}
 
+		// Show success message for completed registration
 		if (
 			urlParams.has('registered') &&
 			urlParams.get('registered') === 'true'
@@ -124,11 +144,12 @@ document.addEventListener('DOMContentLoaded', function () {
 			);
 		}
 
+		// Show success message after logout
 		if (urlParams.has('logout') && urlParams.get('logout') === 'true') {
 			showSuccess('You have been successfully logged out.');
 		}
 	}
 
-	// Check URL parameters on page load
+	// Check URL parameters on page load to display appropriate messages
 	checkUrlParams();
 });

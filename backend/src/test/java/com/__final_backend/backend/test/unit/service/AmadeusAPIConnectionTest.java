@@ -1,4 +1,4 @@
-package com.__final_backend.backend.service;
+package com.__final_backend.backend.test.unit.service;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;

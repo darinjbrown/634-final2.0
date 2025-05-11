@@ -1,6 +1,7 @@
-package com.__final_backend.backend.service;
+package com.__final_backend.backend.test.unit.service;
 
 import com.__final_backend.backend.dto.FlightDTO;
+import com.__final_backend.backend.service.FlightService;
 import com.amadeus.Amadeus;
 import com.amadeus.Params;
 import com.amadeus.exceptions.ResponseException;

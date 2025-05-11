@@ -1,10 +1,17 @@
 /**
- * Authentication script for SkyExplorer
- * Handles login/logout UI state and authentication-related functionality
+ * SkyExplorer Authentication Module
+ *
+ * This script manages the application's authentication state and UI interactions including:
+ * - Checking user authentication status on page load
+ * - Updating UI elements based on authentication state
+ * - Handling user logout
+ * - Checking for admin privileges
+ * - Providing authentication utilities for other scripts
+ * - Managing protected content visibility
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-	// DOM elements for authentication UI
+	// DOM element references for authentication-related UI components
 	const loginNavItem = document.getElementById('loginNavItem');
 	const registerNavItem = document.getElementById('registerNavItem');
 	const userDropdown = document.getElementById('userDropdown');
@@ -15,13 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
 		? new bootstrap.Modal(document.getElementById('loginModal'))
 		: null;
 
-	// Auth-protected elements
+	// Elements that should only be visible to authenticated users
 	const saveAllFlightsBtn = document.getElementById('saveAllFlightsBtn');
 
-	// Check authentication status on page load
+	/**
+	 * Verify authentication status when page loads
+	 * This ensures UI elements are properly shown/hidden based on current auth state
+	 */
 	checkAuthStatus();
 
-	// Add event listener for logout button
+	/**
+	 * Set up event handler for logout button click
+	 * Prevents default anchor behavior and calls the logout function
+	 */
 	if (logoutBtn) {
 		logoutBtn.addEventListener('click', (e) => {
 			e.preventDefault();
@@ -30,8 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	/**
-	 * Get auth headers for API requests
-	 * @returns {Object} Headers object with Authorization if token exists
+	 * Prepare authentication headers for API requests
+	 * Automatically includes JWT token from localStorage if available
+	 *
+	 * @returns {Object} Headers object with Content-Type and optional Authorization
 	 */
 	function getAuthHeaders() {
 		const headers = {
@@ -47,7 +62,16 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	/**
-	 * Check if user is authenticated and update UI accordingly
+	 * Verify if the current user is authenticated by checking JWT token
+	 * and validating it with the server
+	 *
+	 * This function:
+	 * 1. Checks for token in localStorage
+	 * 2. Validates token with backend API
+	 * 3. Updates UI based on authentication status
+	 * 4. Checks for admin privileges if authenticated
+	 *
+	 * @returns {Promise<boolean>} True if user is authenticated, false otherwise
 	 */
 	async function checkAuthStatus() {
 		try {
@@ -58,29 +82,30 @@ document.addEventListener('DOMContentLoaded', () => {
 				return false;
 			}
 
+			// Validate token with backend API
 			const response = await fetch('/api/auth/me', {
 				method: 'GET',
 				headers: getAuthHeaders(),
-				credentials: 'include', // Important for cookies
+				credentials: 'include', // Include cookies for remember-me functionality
 			});
 
 			if (response.ok) {
 				const userData = await response.json();
-				// User is authenticated
+				// User is authenticated, update UI accordingly
 				showAuthenticatedUI(userData);
 
-				// Check if user is admin
+				// Check if user has admin privileges
 				checkAdminStatus(userData);
 
-				// Show protected elements
+				// Show elements restricted to authenticated users
 				if (saveAllFlightsBtn) {
 					saveAllFlightsBtn.style.display = 'inline-block';
 				}
 
 				return true;
 			} else {
-				// Invalid token or other auth error
-				localStorage.removeItem('jwtToken'); // Clear invalid token
+				// Token is invalid or expired
+				localStorage.removeItem('jwtToken'); // Remove invalid token
 				showUnauthenticatedUI();
 				return false;
 			}
@@ -92,8 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	/**
-	 * Update UI for authenticated users
-	 * @param {Object} userData - User data from API
+	 * Update UI elements to reflect authenticated user state
+	 * Shows user-specific elements and hides login/register options
+	 *
+	 * @param {Object} userData - User data object containing username, email, etc.
 	 */
 	function showAuthenticatedUI(userData) {
 		if (loginNavItem) loginNavItem.classList.add('d-none');
@@ -107,7 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	/**
-	 * Update UI for unauthenticated users
+	 * Update UI elements to reflect unauthenticated state
+	 * Shows login/register options and hides user-specific elements
 	 */
 	function showUnauthenticatedUI() {
 		if (loginNavItem) loginNavItem.classList.remove('d-none');
@@ -115,15 +143,17 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (userDropdown) userDropdown.classList.add('d-none');
 		if (adminNavItem) adminNavItem.classList.add('d-none');
 
-		// Hide protected elements
+		// Hide elements restricted to authenticated users
 		if (saveAllFlightsBtn) {
 			saveAllFlightsBtn.style.display = 'none';
 		}
 	}
 
 	/**
-	 * Check if user has admin role and update UI accordingly
-	 * @param {Object} userData - User data from API
+	 * Check if the current user has admin role permissions
+	 * Makes API call to role-check endpoint and updates UI accordingly
+	 *
+	 * @param {Object} userData - User data from authentication check
 	 */
 	async function checkAdminStatus(userData) {
 		try {
@@ -133,8 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
 				credentials: 'include',
 			});
 
-			if (response.ok && (await response.json()) === true) {
-				// User is admin
+			if (response.ok && (await response.json()).hasRole === true) {
+				// User has admin role, show admin navigation
 				if (adminNavItem) adminNavItem.classList.remove('d-none');
 			}
 		} catch (error) {
@@ -144,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	/**
 	 * Log out the current user
+	 * Calls logout API endpoint, clears JWT token, and redirects to home page
 	 */
 	async function logout() {
 		try {
@@ -174,14 +205,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	/**
 	 * Show login modal for protected actions
+	 * Exported as global function for use by other scripts
 	 */
 	window.showLoginRequiredModal = function () {
 		loginModal.show();
 	};
 
 	/**
-	 * Check if user is authenticated, show login modal if not
-	 * @returns {boolean} True if authenticated, false otherwise
+	 * Check if user is authenticated and show login modal if not
+	 * Exported as global function for guarding protected features
+	 *
+	 * @returns {Promise<boolean>} True if authenticated, false otherwise
 	 */
 	window.requireAuthentication = async function () {
 		const isAuthenticated = await checkAuthStatus();

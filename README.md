@@ -209,10 +209,7 @@ The application uses Flyway for database migrations. The schema includes:
    ```
 
 ### Frontend UI Tests
-1. Ensure that ChromeDriver is installed and its path is correctly set in the `FrontendUITest` class:
-   ```java
-   System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
-   ```
+1. Ensure that ChromeDriver is installed. The tests use WebDriver manager that automatically detects and uses your Chrome installation - no manual path configuration is required.
 2. Run the UI tests:
    ```bash
    ./mvnw test

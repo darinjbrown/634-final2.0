@@ -1,4 +1,4 @@
-package com.__final_backend.backend;
+package com.__final_backend.backend.test.unit;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
