@@ -11,9 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
 	const usernameElement = document.getElementById('username');
 	const logoutBtn = document.getElementById('logoutBtn');
 	const adminNavItem = document.getElementById('adminNavItem');
-	const loginModal = new bootstrap.Modal(
-		document.getElementById('loginModal')
-	);
+	const loginModal = document.getElementById('loginModal')
+		? new bootstrap.Modal(document.getElementById('loginModal'))
+		: null;
 
 	// Auth-protected elements
 	const saveAllFlightsBtn = document.getElementById('saveAllFlightsBtn');
@@ -30,15 +30,37 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	/**
+	 * Get auth headers for API requests
+	 * @returns {Object} Headers object with Authorization if token exists
+	 */
+	function getAuthHeaders() {
+		const headers = {
+			'Content-Type': 'application/json',
+		};
+
+		const token = localStorage.getItem('jwtToken');
+		if (token) {
+			headers['Authorization'] = `Bearer ${token}`;
+		}
+
+		return headers;
+	}
+
+	/**
 	 * Check if user is authenticated and update UI accordingly
 	 */
 	async function checkAuthStatus() {
 		try {
+			const token = localStorage.getItem('jwtToken');
+			if (!token) {
+				// No token found, user is not authenticated
+				showUnauthenticatedUI();
+				return false;
+			}
+
 			const response = await fetch('/api/auth/me', {
 				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers: getAuthHeaders(),
 				credentials: 'include', // Important for cookies
 			});
 
@@ -57,7 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				return true;
 			} else {
-				// User is not authenticated
+				// Invalid token or other auth error
+				localStorage.removeItem('jwtToken'); // Clear invalid token
 				showUnauthenticatedUI();
 				return false;
 			}
@@ -106,9 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		try {
 			const response = await fetch('/api/auth/has-role/ADMIN', {
 				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers: getAuthHeaders(),
 				credentials: 'include',
 			});
 
@@ -128,20 +149,26 @@ document.addEventListener('DOMContentLoaded', () => {
 		try {
 			const response = await fetch('/api/auth/logout', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers: getAuthHeaders(),
 				credentials: 'include',
 			});
+
+			// Always clear local storage token, even if server logout fails
+			localStorage.removeItem('jwtToken');
 
 			if (response.ok) {
 				// Redirect to home page after successful logout
 				window.location.href = '/';
 			} else {
 				console.error('Logout failed');
+				// Still redirect to home page
+				window.location.href = '/';
 			}
 		} catch (error) {
 			console.error('Error during logout:', error);
+			// Clear token and redirect even if there's an error
+			localStorage.removeItem('jwtToken');
+			window.location.href = '/';
 		}
 	}
 

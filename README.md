@@ -1,6 +1,6 @@
-# Flight Search Application
+# SkyExplorer - Flight Search Application
 
-This project is a Java Spring Boot application that serves both the backend and frontend. It provides a flight search feature using the Amadeus API and serves a web-based user interface with a modern Material UI-inspired design.
+SkyExplorer is a modern Java Spring Boot application that provides a comprehensive flight search and booking platform. It integrates with the Amadeus API for real-time flight data and features a responsive Material UI-inspired interface built with Bootstrap 5. The application supports user management, flight searches, history tracking, and booking capabilities.
 
 ## Project Structure
 
@@ -9,16 +9,21 @@ backend/                          # Spring Boot application
 ├── src/main/java/com/__final_backend/backend/
 │   ├── config/                   # Application configurations
 │   ├── controller/               # REST controllers and view controllers
+│   │   ├── admin/                # Admin-specific controllers
 │   │   ├── db/                   # Database-related controllers
 │   ├── dto/                      # Data Transfer Objects
 │   ├── entity/                   # Database entity classes
 │   ├── repository/               # Spring Data JPA repositories
+│   ├── security/                 # Security configurations and JWT handlers
 │   ├── service/                  # Business logic and Amadeus API integration
 │   │   ├── db/                   # Database service classes
 │   └── util/                     # Helper utilities for Amadeus API
 ├── src/main/resources/
 │   ├── db/migration/             # Flyway database migration scripts
 │   ├── static/                   # Static resources (CSS, JavaScript)
+│   │   ├── css/                  # Stylesheet files
+│   │   ├── js/                   # JavaScript files
+│   │   └── favicon.ico           # Application favicon
 │   └── templates/                # HTML templates
 └── src/test/                     # Test classes
 ```
@@ -31,8 +36,10 @@ backend/                          # Spring Boot application
 - **Real-time Validation**: Form validation with clear error messages
 - **Flight Results Display**: Clearly formatted flight details and pricing
 - **Database Integration**: Store user data, flight search history, saved flights, and bookings
-- **User Management**: Create and manage user accounts
+- **User Management**: Create and manage user accounts with role-based access control
+- **Security Features**: JWT authentication, password encryption, CSRF protection
 - **Search History**: Track and display user's flight search history
+- **Administrative Interface**: Admin panel for user management and system monitoring
 
 ## Prerequisites
 
@@ -43,33 +50,89 @@ Ensure the following are installed on your system:
 - **Internet Connection** (for Amadeus API access)
 - **MySQL** (optional, for production database)
 
-## Starting the Application
+## Installation and Setup
 
-### Backend (Spring Boot Application with Integrated Frontend)
+### Clone the Repository
+1. Clone this repository to your local machine:
+   ```bash
+   git clone https://github.com/darinjbrown/634-final2.0.git
+   ```
+   Or download and extract the attached ZIP file.
+
+### Configure Application Properties
+1. Navigate to `backend/src/main/resources/application.properties`
+2. Review the configuration settings:
+   - The default H2 in-memory database is suitable for development
+   - Verify Amadeus API credentials are set correctly
+   - For production, consider configuring MySQL (see Database Configuration section)
+
+## Running the Application
+
 1. Open a terminal and navigate to the `backend` directory:
    ```bash
    cd backend
    ```
-2. If you are using the Maven Wrapper:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-   If Maven is installed globally:
-   ```bash
-   mvn spring-boot:run
-   ```
-3. Open your browser and navigate to `http://localhost:8080` to access the application.
 
-## Accessing the Application
-The application serves a modern web-based interface for searching flights:
-1. Start the application as described above.
-2. Open your browser and navigate to `http://localhost:8080`.
-3. Use the form on the homepage to search for flights:
-   - Enter the 3-letter IATA airport codes for origin and destination (e.g., JFK, LAX)
-   - Select your travel dates
+2. Build and run the application using Maven:
+   - Using Maven Wrapper (Windows):
+     ```bash
+     mvnw spring-boot:run
+     ```
+   - Using Maven Wrapper (Linux/Mac):
+     ```bash
+     ./mvnw spring-boot:run
+     ```
+   - If Maven is installed globally:
+     ```bash
+     mvn spring-boot:run
+     ```
+
+3. Wait for the application to start. You should see output indicating the server is running on port 8080.
+
+4. Open your browser and navigate to `http://localhost:8080` to access the application.
+
+## Accessing SkyExplorer
+
+### Public Access
+- Visit `http://localhost:8080` to access the main flight search page
+- Anyone can search for flights without logging in
+- Registration and login are required for saving searches and booking flights
+
+### User Registration
+1. Click "Register" in the top navigation bar
+2. Fill out the registration form with your details
+3. Accept the terms and conditions
+4. Click "Register" to create your account
+5. You'll be redirected to the login page upon successful registration
+
+### User Login
+1. Click "Login" in the top navigation bar
+2. Enter your username/email and password
+3. Check the "Remember me" option if desired
+4. Click "Login" to access your account
+5. Once logged in, you can access additional features like saving searches and booking flights
+
+### Admin Access
+1. To access administrative features, log in with the following credentials:
+   - Username: `AdminTester`
+   - Password: `Test634`
+2. After logging in as admin, you'll see an "Admin" link in the navigation bar
+3. Click this link to access the administrative dashboard where you can:
+   - View and manage users
+   - Monitor system activity
+   - Access system diagnostics
+
+## Using the Flight Search
+
+1. On the homepage, fill out the search form:
+   - Enter 3-letter IATA airport codes for origin and destination (e.g., JFK, LAX)
+   - Select your travel date(s)
    - Choose the number of travelers
    - Select trip type (one-way or round-trip)
-4. Click "Search Flights" to see available flights matching your criteria.
+2. Click "Search Flights" to submit your query
+3. Review the flight results displayed below the search form
+4. You can sort the results by price using the "Sort by Price" button
+5. If logged in, you can save flights for later reference
 
 ## Database Configuration
 
@@ -98,10 +161,11 @@ The application uses an embedded H2 database by default for development and test
 The application uses Flyway for database migrations. The schema includes:
 
 - **users**: User account information
+- **user_roles**: Role assignments for user authorization
 - **flight_searches**: User search history
 - **saved_flights**: Flights saved by users for later reference
 - **booking_records**: Flight booking information
-- **audit_trail**: System audit logs
+- **audit_trail**: System audit logs for security monitoring
 
 ## Technical Implementation
 
@@ -111,14 +175,16 @@ The application uses Flyway for database migrations. The schema includes:
 - **Spring Data JPA**: ORM for database operations
 - **Flyway**: Database migrations for version control
 - **RESTful API**: Provides endpoints for flight search and database operations
+- **Spring Security**: User authentication and authorization
+- **JWT Authentication**: Secure token-based authentication
 - **Error Handling**: Comprehensive exception handling with meaningful error messages
-- **Caching**: Caches airline information for improved performance
 
 ### Frontend
 - **Thymeleaf Templates**: Server-side rendering of HTML pages
 - **Bootstrap 5**: Modern responsive layout
 - **Material Design**: UI elements styled with Material Design principles
 - **JavaScript**: Dynamic form interaction and AJAX requests
+- **CSRF Protection**: Security for form submissions
 
 ### Database
 - **H2/MySQL**: Relational database storage
@@ -178,6 +244,12 @@ The application integrates with the Amadeus Flight Offers Search API and provide
 - `GET /api/flights/search` - Search for flights with query parameters
 - `POST /api/flights/search` - Search for flights with request body
 
+### Authentication
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Authenticate a user and get JWT token
+- `POST /api/auth/logout` - Logout and invalidate token
+- `GET /api/auth/me` - Get current authenticated user details
+
 ### Database Operations
 - `GET /api/users` - Get all users
 - `POST /api/users` - Create a new user
@@ -186,6 +258,12 @@ The application integrates with the Amadeus Flight Offers Search API and provide
 - `DELETE /api/users/{id}` - Delete user
 - `GET /api/flight-searches/user/{userId}` - Get flight searches by user
 - `POST /api/flight-searches` - Save a flight search
+
+### Admin Operations
+- `POST /api/admin/users/{userId}/promote` - Promote a user to admin
+- `POST /api/admin/users/{userId}/demote` - Remove admin role from a user
+- `POST /api/admin/users/{userId}/roles/{role}` - Add a role to a user
+- `DELETE /api/admin/users/{userId}/roles/{role}` - Remove a role from a user
 
 ## Configuration
 
@@ -233,8 +311,10 @@ logging.level.com.__final_backend=WARN
 
 ## Additional Notes
 - The application uses Amadeus test environment for flight data
+- The in-memory H2 database is reset with each application restart; all user data and searches will be lost
 - CORS is configured to allow requests from `http://localhost:3000` and `http://localhost:3001`
 - The database automatically initializes with sample data for testing
+- A test admin account (AdminTester/Test634) is created automatically on startup
 
 ## Troubleshooting
 - If `mvnw` is not recognized, ensure you are in the correct directory and the Maven Wrapper files exist
@@ -242,3 +322,4 @@ logging.level.com.__final_backend=WARN
 - For UI tests, ensure that ChromeDriver is compatible with your installed version of Chrome
 - If database errors occur, check the connection settings in `application.properties`
 - For database migration issues, check the Flyway logs and ensure migration scripts are correctly formatted
+- If you're unable to log in as admin, ensure the Flyway migrations have run successfully

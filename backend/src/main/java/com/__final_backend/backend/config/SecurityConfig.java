@@ -70,7 +70,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
-                        .requestMatchers("/", "/index.html", "/static/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/", "/index.html", "/static/**", "/h2-console/**", "/favicon.ico").permitAll()
                         .requestMatchers("/login", "/register").permitAll() // Allow access to login and register pages
                         .requestMatchers("/login.html", "/register.html").permitAll() // Also allow direct HTML file
                                                                                       // access
@@ -95,8 +95,9 @@ public class SecurityConfig {
                                         "default-src 'self'; " +
                                                 "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
                                                 +
-                                                "style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+                                                "style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'unsafe-inline'; "
                                                 +
+                                                "img-src 'self' data:; " +
                                                 "font-src 'self' https://fonts.gstatic.com"))
                         // Update referrer policy with proper enum value
                         .referrerPolicy(referrer -> referrer
