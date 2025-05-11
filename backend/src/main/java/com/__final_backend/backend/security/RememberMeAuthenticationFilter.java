@@ -14,8 +14,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Filter that checks for remember-me cookies and authenticates users
@@ -70,11 +73,23 @@ public class RememberMeAuthenticationFilter extends OncePerRequestFilter {
     if (userOptional.isPresent()) {
       User user = userOptional.get();
 
-      // Create an authenticated token with basic role
+      List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+      // Add user authorities from roles
+      if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+        authorities.addAll(user.getRoles().stream()
+            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+            .collect(Collectors.toList()));
+      } else {
+        // Default to USER role if no roles are specified
+        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+      }
+
+      // Create an authenticated token with proper roles
       Authentication authentication = new UsernamePasswordAuthenticationToken(
           user.getUsername(),
           null,
-          Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+          authorities);
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
     }

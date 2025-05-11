@@ -9,7 +9,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Custom implementation of UserDetailsService for database authentication.
@@ -29,11 +32,21 @@ public class CustomUserDetailsService implements UserDetailsService {
     User user = userRepository.findByUsername(username)
         .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-    // For simplicity, we're giving all users a basic "USER" role
-    // In a more complex application, you'd retrieve roles from the database
+    List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+    // Add user authorities from roles
+    if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+      authorities.addAll(user.getRoles().stream()
+          .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+          .collect(Collectors.toList()));
+    } else {
+      // Default to USER role if no roles are specified
+      authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+
     return new org.springframework.security.core.userdetails.User(
         user.getUsername(),
         user.getPasswordHash(),
-        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        authorities);
   }
 }

@@ -4,8 +4,8 @@ import com.__final_backend.backend.entity.User;
 import com.__final_backend.backend.repository.UserRepository;
 import com.__final_backend.backend.security.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -58,6 +58,9 @@ public class AuthServiceImpl implements AuthService {
     user.setLastName(lastName);
     user.setCreatedAt(LocalDateTime.now());
     user.setUpdatedAt(LocalDateTime.now());
+
+    // Add default USER role
+    user.addRole("USER");
 
     return userRepository.save(user);
   }
@@ -118,6 +121,30 @@ public class AuthServiceImpl implements AuthService {
     }
 
     return userRepository.findByUsername(rememberMeToken.getUsername());
+  }
+
+  @Override
+  @Transactional
+  public User addRole(User user, String role) {
+    user.addRole(role);
+    return userRepository.save(user);
+  }
+
+  @Override
+  @Transactional
+  public User removeRole(User user, String role) {
+    user.getRoles().remove(role);
+    return userRepository.save(user);
+  }
+
+  @Override
+  public boolean hasRole(String role) {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null && auth.isAuthenticated() && !(auth.getPrincipal().equals("anonymousUser"))) {
+      return auth.getAuthorities().stream()
+          .anyMatch(a -> a.getAuthority().equals("ROLE_" + role));
+    }
+    return false;
   }
 
   /**

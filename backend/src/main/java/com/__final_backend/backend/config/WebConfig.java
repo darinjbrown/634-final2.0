@@ -2,6 +2,7 @@ package com.__final_backend.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -30,12 +31,38 @@ public class WebConfig {
              */
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**") // Allow CORS for API endpoints
-                        .allowedOrigins("http://localhost:3000", "http://localhost:3001") // Allow requests from the
-                                                                                          // frontend
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allow specific HTTP methods
-                        .allowedHeaders("*") // Allow all headers
-                        .allowCredentials(true); // Allow cookies if needed
+                // Secure CORS configuration for API endpoints
+                registry.addMapping("/api/**")
+                        // Explicitly specify allowed origins (no wildcards)
+                        .allowedOrigins("http://localhost:3000", "http://localhost:3001", "http://localhost:8080")
+                        // Explicitly specify allowed methods
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
+                        // Explicitly specify allowed headers
+                        .allowedHeaders(
+                                HttpHeaders.AUTHORIZATION,
+                                HttpHeaders.CONTENT_TYPE,
+                                HttpHeaders.ACCEPT,
+                                "X-CSRF-TOKEN",
+                                "X-Requested-With")
+                        // Expose CSRF token header to JavaScript
+                        .exposedHeaders(
+                                HttpHeaders.AUTHORIZATION,
+                                "X-CSRF-TOKEN")
+                        .allowCredentials(true) // Enable cookies for authentication
+                        .maxAge(3600L); // Cache preflight response for 1 hour
+
+                // More restrictive CORS for admin endpoints
+                registry.addMapping("/api/admin/**")
+                        .allowedOrigins("http://localhost:3000") // Only admin portal
+                        .allowedMethods("GET", "POST", "PUT", "DELETE")
+                        .allowedHeaders(
+                                HttpHeaders.AUTHORIZATION,
+                                HttpHeaders.CONTENT_TYPE,
+                                HttpHeaders.ACCEPT,
+                                "X-CSRF-TOKEN")
+                        .exposedHeaders("X-CSRF-TOKEN")
+                        .allowCredentials(true)
+                        .maxAge(1800L); // Cache preflight for 30 minutes
             }
 
             /**

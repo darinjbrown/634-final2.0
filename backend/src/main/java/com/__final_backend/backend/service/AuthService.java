@@ -63,4 +63,29 @@ public interface AuthService {
    */
   Optional<User> validateRememberMeToken(String token);
 
+  /**
+   * Add a role to a user
+   * 
+   * @param user the user
+   * @param role the role to add
+   * @return the updated user
+   */
+  User addRole(User user, String role);
+
+  /**
+   * Remove a role from a user
+   * 
+   * @param user the user
+   * @param role the role to remove
+   * @return the updated user
+   */
+  User removeRole(User user, String role);
+
+  /**
+   * Check if the current user has a specific role
+   * 
+   * @param role the role to check
+   * @return true if the current user has the role, false otherwise
+   */
+  boolean hasRole(String role);
 }

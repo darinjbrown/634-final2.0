@@ -184,6 +184,22 @@ public class AuthController {
   }
 
   /**
+   * Check if the current user has a specific role
+   *
+   * @param role the role to check
+   * @return true if the user has the role, false otherwise
+   */
+  @GetMapping("/has-role/{role}")
+  public ResponseEntity<?> hasRole(@PathVariable String role) {
+    boolean hasRole = authService.hasRole(role);
+
+    Map<String, Boolean> response = new HashMap<>();
+    response.put("hasRole", hasRole);
+
+    return ResponseEntity.ok(response);
+  }
+
+  /**
    * Login request data class
    */
   public static class LoginRequest {
