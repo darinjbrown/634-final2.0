@@ -14,4 +14,14 @@ public class ViewController {
   public String index() {
     return "index"; // Maps to src/main/resources/templates/index.html
   }
+
+  @GetMapping("/login")
+  public String login() {
+    return "login"; // Maps to src/main/resources/templates/login.html
+  }
+
+  @GetMapping("/register")
+  public String register() {
+    return "register"; // Maps to src/main/resources/templates/register.html
+  }
 }

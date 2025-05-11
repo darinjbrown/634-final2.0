@@ -38,6 +38,15 @@
 	}
 
 	/**
+	 * Returns the header object with CSRF token
+	 * @returns {Object} Header object with X-CSRF-TOKEN
+	 */
+	function getCsrfHeader() {
+		const token = getCsrfToken();
+		return token ? { 'X-CSRF-TOKEN': token } : {};
+	}
+
+	/**
 	 * Initialize CSRF protection for all forms and AJAX requests
 	 */
 	function initializeCsrfProtection() {
@@ -69,9 +78,10 @@
 		// Override fetch API to include CSRF token
 		const originalFetch = window.fetch;
 		window.fetch = function (url, options = {}) {
-			// Only modify non-GET requests
-			if (options.method && options.method.toLowerCase() !== 'get') {
-				options.headers = addCsrfToHeaders(options.headers || {});
+			// Only modify same-origin requests
+			if (url.startsWith('/') || url.startsWith(window.location.origin)) {
+				if (!options.headers) options.headers = {};
+				options.headers = addCsrfToHeaders(options.headers);
 			}
 			return originalFetch.call(this, url, options);
 		};
@@ -99,9 +109,10 @@
 	// Initialize CSRF protection
 	initializeCsrfProtection();
 
-	// Expose utility functions to window object if needed
+	// Expose utility functions to window object
 	window.csrfUtils = {
 		getCsrfToken,
 		addCsrfToHeaders,
+		getCsrfHeader,
 	};
 })();

@@ -71,6 +71,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/", "/index.html", "/static/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/login", "/register").permitAll() // Allow access to login and register pages
+                        .requestMatchers("/login.html", "/register.html").permitAll() // Also allow direct HTML file
+                                                                                      // access
                         .requestMatchers("/api/flights/**", "/api/airports/**").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
                         // Swagger/OpenAPI endpoints
@@ -89,7 +92,12 @@ public class SecurityConfig {
                         // Update content security policy with newer API
                         .contentSecurityPolicy(csp -> csp
                                 .policyDirectives(
-                                        "default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com"))
+                                        "default-src 'self'; " +
+                                                "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+                                                +
+                                                "style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+                                                +
+                                                "font-src 'self' https://fonts.gstatic.com"))
                         // Update referrer policy with proper enum value
                         .referrerPolicy(referrer -> referrer
                                 .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
