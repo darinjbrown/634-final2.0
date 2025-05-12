@@ -23,11 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	let currentSearchResults = [];
 
 	/**
-	 * Initialize toast notification container for displaying feedback to the user
-	 */
-	createToastContainer();
-
-	/**
 	 * Toggle return date field visibility based on one-way or round-trip selection
 	 * Hides the return date when one-way is selected, shows it for round-trip
 	 */
@@ -70,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			if (!response.ok) {
 				const error = await response.text();
-				showToast('There was an error retrieving flights');
 				return;
 			}
 
@@ -90,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
 				// Handle case when no flights are found
 				resultsList.innerHTML =
 					'<li class="list-group-item text-center py-4">No flights found matching your criteria.</li>';
-				showToast('No flights found matching your criteria.', 'info');
 			} else {
 				// Create flight result cards for each flight returned
 				flights.forEach((flight, index) => {
@@ -123,16 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
 					resultsList.appendChild(listItem);
 				});
 
-				// Add event listeners to individual flight save buttons
-				document.querySelectorAll('.save-flight-btn').forEach((btn) => {
-					btn.addEventListener('click', handleSaveFlight);
-				});
-
-				// Show success toast with the number of flights found
-				showToast(
-					`Found ${flights.length} flights matching your criteria.`,
-					'success'
-				);
+				// Add event listeners to individual flight save buttons - CSP compliant
+				attachSaveButtonListeners();
 			}
 
 			// Display the results section
@@ -141,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Smoothly scroll to the results section
 			flightResults.scrollIntoView({ behavior: 'smooth' });
 		} catch (error) {
-			showToast('Error: ' + error.message, 'error');
 			// Reset button state
 			searchButton.innerHTML =
 				'<i class="material-icons align-middle me-1">search</i> Search Flights';
@@ -154,6 +138,23 @@ document.addEventListener('DOMContentLoaded', () => {
 	 */
 	if (saveAllFlightsBtn) {
 		saveAllFlightsBtn.addEventListener('click', handleSaveAllFlights);
+	}
+
+	/**
+	 * Attach event listeners to all save flight buttons
+	 * This ensures compliance with Content Security Policy
+	 */
+	function attachSaveButtonListeners() {
+		document.querySelectorAll('.save-flight-btn').forEach((btn) => {
+			// Remove any existing event listeners to prevent duplicates
+			const newBtn = btn.cloneNode(true);
+			btn.parentNode.replaceChild(newBtn, btn);
+
+			// Add the click event listener in a CSP-compliant way
+			newBtn.addEventListener('click', handleSaveFlight);
+		});
+
+		console.log('Save button listeners attached in CSP-compliant way');
 	}
 
 	/**
@@ -243,7 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Call the API to save the flight
 			const saveResponse = await saveFlight(flight);
 			if (saveResponse.success) {
-				showToast('Flight saved successfully!', 'success');
 				// Update button appearance to indicate flight is saved
 				event.currentTarget.innerHTML = `
 					<i class="material-icons align-middle" style="font-size: 16px;">favorite</i> Saved
@@ -252,13 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
 				event.currentTarget.classList.remove('btn-outline-primary');
 				event.currentTarget.classList.add('btn-success');
 			} else {
-				showToast(
-					saveResponse.message || 'Failed to save flight',
-					'error'
-				);
 			}
 		} catch (error) {
-			showToast('Error: ' + error.message, 'error');
 		}
 	}
 
@@ -280,7 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 
 		if (currentSearchResults.length === 0) {
-			showToast('No flights to save', 'info');
 			return;
 		}
 
@@ -310,17 +304,12 @@ document.addEventListener('DOMContentLoaded', () => {
 				btn.classList.add('btn-success');
 			});
 
-			// Show success message
-			showToast(`Successfully saved ${successful} flights!`, 'success');
-
 			// Update Save All button
 			saveAllFlightsBtn.innerHTML = `
 				<i class="material-icons align-middle">favorite</i> All Saved
 			`;
 			saveAllFlightsBtn.disabled = true;
 		} catch (error) {
-			showToast('Error: ' + error.message, 'error');
-
 			// Reset button
 			saveAllFlightsBtn.disabled = false;
 			saveAllFlightsBtn.innerHTML = `
@@ -337,40 +326,140 @@ document.addEventListener('DOMContentLoaded', () => {
 	 */
 	async function saveFlight(flight) {
 		try {
+			// First check if JWT token exists
+			const token = localStorage.getItem('jwtToken');
+			if (!token) {
+				// No token found, show login modal
+				const bsLoginModal = new bootstrap.Modal(loginModal);
+				bsLoginModal.show();
+				return {
+					success: false,
+					message: 'Please log in to save flights',
+				};
+			}
+
+			// Get fresh auth headers
+			const headers = getAuthHeaders();
+
+			// Debug token being sent
+			console.log(
+				'Using JWT token for request:',
+				token.substring(0, 15) + '...'
+			);
+
+			// Convert time-only strings to proper ISO datetime format
+			const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+			const departureDateTime = formatDateTimeForAPI(
+				flight.departureTimeRaw || flight.departureTime,
+				today
+			);
+			const arrivalDateTime = formatDateTimeForAPI(
+				flight.arrivalTimeRaw || flight.arrivalTime,
+				today
+			);
+
+			console.log('Sending departure time:', departureDateTime);
+			console.log('Sending arrival time:', arrivalDateTime);
+
+			// Make the API request with auth headers
 			const response = await fetch('/api/saved-flights', {
 				method: 'POST',
-				headers: getAuthHeaders(),
+				headers: headers,
+				credentials: 'include', // Include cookies for session validation
 				body: JSON.stringify({
-					airlineCode: flight.airlineCode,
+					airlineCode:
+						flight.airlineCode ||
+						extractAirlineCode(flight.flightNumber),
 					airlineName: flight.airline,
 					flightNumber: flight.flightNumber,
 					origin: flight.departure,
 					destination: flight.arrival,
-					departureTime:
-						flight.departureTimeRaw || flight.departureTime,
-					arrivalTime: flight.arrivalTimeRaw || flight.arrivalTime,
+					departureTime: departureDateTime,
+					arrivalTime: arrivalDateTime,
 					price: parseFloat(flight.price),
 				}),
 			});
 
 			if (response.ok) {
-				const data = await response.json();
+				// HTTP 2xx status codes (including 201 Created)
+				console.log(
+					'Flight saved successfully with status:',
+					response.status
+				);
+
+				// Check if response has content before trying to parse as JSON
+				const contentType = response.headers.get('content-type');
+				let data = {};
+
+				if (
+					contentType &&
+					contentType.includes('application/json') &&
+					response.status !== 204
+				) {
+					try {
+						// Only try to parse JSON if we have JSON content
+						const responseText = await response.text();
+						if (responseText) {
+							data = JSON.parse(responseText);
+						}
+					} catch (e) {
+						console.warn(
+							"Couldn't parse response as JSON, but the request was successful",
+							e
+						);
+					}
+				}
+
 				return { success: true, data };
 			} else {
-				if (response.status === 401) {
-					// Unauthorized - token might be expired
-					localStorage.removeItem('jwtToken');
+				if (response.status === 401 || response.status === 403) {
+					// Unauthorized or Forbidden - token might be expired or invalid
+					console.log('Authentication error:', response.status);
+
+					// Don't automatically remove token during development
+					const isLocalhost =
+						window.location.hostname === 'localhost' ||
+						window.location.hostname === '127.0.0.1';
+
+					if (!isLocalhost) {
+						localStorage.removeItem('jwtToken'); // Only clear in production
+					} else {
+						console.warn(
+							'Auth validation failed, but keeping token for development purposes'
+						);
+					}
+
+					// Capture error message without showing a toast
+					let errorMessage = 'Session expired. Please log in again.';
+					try {
+						const errorData = await response.json();
+						if (errorData.message) {
+							errorMessage = errorData.message;
+						}
+					} catch (e) {
+						// If not JSON, use default message
+					}
+
+					// Show login modal
 					const bsLoginModal = new bootstrap.Modal(loginModal);
 					bsLoginModal.show();
+
 					return {
 						success: false,
-						message: 'Please log in to save flights',
+						message: errorMessage,
 					};
 				} else {
-					const errorData = await response.json();
+					// Other errors
+					let message = 'Failed to save flight';
+					try {
+						const errorData = await response.json();
+						message = errorData.message || message;
+					} catch (e) {
+						// If response is not JSON, use default message
+					}
 					return {
 						success: false,
-						message: errorData.message || 'Failed to save flight',
+						message: message,
 					};
 				}
 			}
@@ -378,6 +467,69 @@ document.addEventListener('DOMContentLoaded', () => {
 			console.error('Error saving flight:', error);
 			return { success: false, message: error.message };
 		}
+	}
+
+	/**
+	 * Format a time string into a proper ISO datetime format
+	 *
+	 * @param {string} timeStr - The time string (e.g. "18:30")
+	 * @param {string} dateStr - The date string in YYYY-MM-DD format
+	 * @returns {string} ISO datetime format (YYYY-MM-DDThh:mm:ss)
+	 */
+	function formatDateTimeForAPI(timeStr, dateStr) {
+		// Check if already in ISO format
+		if (timeStr && timeStr.includes('T')) {
+			return timeStr;
+		}
+
+		// Handle empty values
+		if (!timeStr) return null;
+
+		// Extract hours and minutes from time string
+		let hours = 0;
+		let minutes = 0;
+
+		// Try to parse common time formats
+		const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})(?:\s*(AM|PM))?/i);
+		if (timeMatch) {
+			hours = parseInt(timeMatch[1], 10);
+			minutes = parseInt(timeMatch[2], 10);
+
+			// Handle AM/PM if present
+			if (
+				timeMatch[3] &&
+				timeMatch[3].toUpperCase() === 'PM' &&
+				hours < 12
+			) {
+				hours += 12;
+			} else if (
+				timeMatch[3] &&
+				timeMatch[3].toUpperCase() === 'AM' &&
+				hours === 12
+			) {
+				hours = 0;
+			}
+		}
+
+		// Format hours and minutes with leading zeros
+		const formattedHours = hours.toString().padStart(2, '0');
+		const formattedMinutes = minutes.toString().padStart(2, '0');
+
+		// Construct ISO datetime
+		return `${dateStr}T${formattedHours}:${formattedMinutes}:00`;
+	}
+
+	/**
+	 * Extract airline code from flight number if not explicitly provided
+	 *
+	 * @param {string} flightNumber - The flight number (e.g. "AA123")
+	 * @returns {string} The airline code (e.g. "AA")
+	 */
+	function extractAirlineCode(flightNumber) {
+		if (!flightNumber) return '';
+		// Most airline codes are 2 characters, some are 3
+		const match = flightNumber.match(/^([A-Z]{2,3})\d+$/);
+		return match ? match[1] : '';
 	}
 
 	/**
@@ -419,10 +571,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			resultsList.appendChild(listItem);
 		});
 
-		// Re-attach event listeners
-		document.querySelectorAll('.save-flight-btn').forEach((btn) => {
-			btn.addEventListener('click', handleSaveFlight);
-		});
+		// Re-attach event listeners in a CSP-compliant way
+		attachSaveButtonListeners();
 	}
 
 	/**
@@ -436,71 +586,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		toastContainer.id = 'toastContainer';
 		document.body.appendChild(toastContainer);
 	}
-
-	/**
-	 * Display a toast notification to the user
-	 * Supports different types: info, success, error, warning
-	 *
-	 * @param {string} message - The message to display in the toast
-	 * @param {string} type - The type of toast determining its color and icon
-	 */
-	function showToast(message, type = 'info') {
-		const toastContainer = document.getElementById('toastContainer');
-		const toast = document.createElement('div');
-		const id = 'toast-' + Date.now();
-
-		// Set toast classes based on type
-		let bgClass, iconName;
-		switch (type) {
-			case 'success':
-				bgClass = 'bg-success text-white';
-				iconName = 'check_circle';
-				break;
-			case 'error':
-				bgClass = 'bg-danger text-white';
-				iconName = 'error';
-				break;
-			case 'warning':
-				bgClass = 'bg-warning';
-				iconName = 'warning';
-				break;
-			default:
-				bgClass = 'bg-info text-white';
-				iconName = 'info';
-		}
-
-		toast.className = `toast ${bgClass} border-0 show`;
-		toast.id = id;
-		toast.setAttribute('role', 'alert');
-		toast.setAttribute('aria-live', 'assertive');
-		toast.setAttribute('aria-atomic', 'true');
-
-		toast.innerHTML = `
-			<div class="toast-header ${bgClass} border-0">
-				<i class="material-icons me-2">${iconName}</i>
-				<strong class="me-auto">Flight Search</strong>
-				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-			</div>
-			<div class="toast-body">
-				${message}
-			</div>
-		`;
-
-		toastContainer.appendChild(toast);
-
-		// Initialize Bootstrap toast
-		const bsToast = new bootstrap.Toast(toast, {
-			autohide: true,
-			delay: 5000,
-		});
-
-		bsToast.show();
-
-		// Remove toast from DOM after it's hidden
-		toast.addEventListener('hidden.bs.toast', () => {
-			toast.remove();
-		});
-	}
 });
 
 /**
@@ -512,7 +597,10 @@ document.addEventListener('DOMContentLoaded', () => {
  * @returns {boolean} Always returns false to prevent default form submission
  */
 function handleFlightSearch(event) {
-	event.preventDefault();
+	// Prevent default form submission to make this CSP-compliant
+	if (event) {
+		event.preventDefault();
+	}
 
 	const flightSearchForm = document.getElementById('flightSearchForm');
 	const searchButton = document.querySelector('button[type="submit"]');
@@ -539,7 +627,11 @@ function handleFlightSearch(event) {
 
 			if (!response.ok) {
 				return response.text().then((error) => {
-					showToast('There was an error retrieving flights');
+					if (typeof showToast === 'function') {
+						showToast('There was an error retrieving flights');
+					} else {
+						console.error('Error retrieving flights');
+					}
 					throw new Error(error);
 				});
 			}
@@ -553,10 +645,14 @@ function handleFlightSearch(event) {
 				document.getElementById('saveAllFlightsBtn');
 
 			resultsList.innerHTML = '';
-			currentSearchResults = flights;
+			window.currentSearchResults = flights; // Make it globally available
 
-			// Check if user is logged in to show save options
-			const isAuthenticated = isUserAuthenticated();
+			// Check authentication status using global function
+			const isAuthenticated =
+				typeof isUserAuthenticated === 'function'
+					? isUserAuthenticated()
+					: localStorage.getItem('jwtToken') !== null;
+
 			if (isAuthenticated && flights.length > 0) {
 				saveAllFlightsBtn.style.display = 'inline-block';
 			} else {
@@ -566,7 +662,6 @@ function handleFlightSearch(event) {
 			if (flights.length === 0) {
 				resultsList.innerHTML =
 					'<li class="list-group-item text-center py-4">No flights found matching your criteria.</li>';
-				showToast('No flights found matching your criteria.', 'info');
 			} else {
 				flights.forEach((flight, index) => {
 					const listItem = document.createElement('li');
@@ -598,16 +693,16 @@ function handleFlightSearch(event) {
 					resultsList.appendChild(listItem);
 				});
 
-				// Add event listeners to save buttons
+				// Add event listeners to save buttons in a CSP-compliant way
 				document.querySelectorAll('.save-flight-btn').forEach((btn) => {
-					btn.addEventListener('click', handleSaveFlight);
+					btn.addEventListener('click', function (e) {
+						if (typeof handleSaveFlight === 'function') {
+							handleSaveFlight(e);
+						} else if (window.handleSaveFlight) {
+							window.handleSaveFlight(e);
+						}
+					});
 				});
-
-				// Show success toast with the number of flights found
-				showToast(
-					`Found ${flights.length} flights matching your criteria.`,
-					'success'
-				);
 			}
 
 			flightResults.style.display = 'block';
@@ -616,7 +711,11 @@ function handleFlightSearch(event) {
 			flightResults.scrollIntoView({ behavior: 'smooth' });
 		})
 		.catch((error) => {
-			showToast('Error: ' + error.message, 'error');
+			if (typeof showToast === 'function') {
+				showToast('Error: ' + error.message, 'error');
+			} else {
+				console.error('Error:', error.message);
+			}
 			// Reset button state
 			searchButton.innerHTML =
 				'<i class="material-icons align-middle me-1">search</i> Search Flights';
@@ -625,4 +724,14 @@ function handleFlightSearch(event) {
 
 	// Return false to prevent the default form submission
 	return false;
+}
+
+/**
+ * Global version of isUserAuthenticated for use outside the main DOM event listener
+ * Needed for the handleFlightSearch function
+ *
+ * @returns {boolean} True if a JWT token exists in localStorage, false otherwise
+ */
+function isUserAuthenticated() {
+	return localStorage.getItem('jwtToken') !== null;
 }

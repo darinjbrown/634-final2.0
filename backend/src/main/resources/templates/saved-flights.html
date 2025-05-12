@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkyExplorer - Flight Search</title>
+    <title>SkyExplorer - Saved Flights</title>
     <!-- Favicon -->
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
@@ -28,13 +28,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/"><i class="material-icons align-middle me-1">search</i> Search Flights</a>
+                        <a class="nav-link" href="/"><i class="material-icons align-middle me-1">search</i> Search Flights</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/search-history"><i class="material-icons align-middle me-1">history</i> Search History</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/saved-flights"><i class="material-icons align-middle me-1">favorite</i> Saved Flights</a>
+                        <a class="nav-link active" href="/saved-flights"><i class="material-icons align-middle me-1">favorite</i> Saved Flights</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/bookings"><i class="material-icons align-middle me-1">confirmation_number</i> Bookings</a>
@@ -74,87 +74,33 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="p-5 text-center bg-light rounded-3">
-                    <h1 class="display-5 fw-bold"><i class="material-icons align-middle me-2">flight_takeoff</i> Find Your Perfect Flight</h1>
-                    <p class="fs-4">Search thousands of flights, save your favorites, and book your next adventure!</p>
+                    <h1 class="display-5 fw-bold"><i class="material-icons align-middle me-2">favorite</i> Your Saved Flights</h1>
+                    <p class="fs-4">View and manage all your favorite flights in one place!</p>
                 </div>
             </div>
         </div>
 
-        <!-- Flight search form -->
+        <!-- Saved flights content -->
         <div class="row justify-content-center">
             <div class="col-md-10">
                 <div class="card shadow-lg border-0 mb-4">
                     <div class="card-header bg-primary text-white py-3">
-                        <h3 class="mb-0 text-center">Flight Search</h3>
+                        <h3 class="mb-0 text-center">Saved Flights</h3>
                     </div>
                     <div class="card-body p-4">
-                        <form id="flightSearchForm">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="startingLocation" class="form-label">Starting Location</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="material-icons">flight_takeoff</i></span>
-                                        <input type="text" class="form-control" id="startingLocation" name="startingLocation" placeholder="Enter airport code (e.g., JFK)" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="endingLocation" class="form-label">Ending Location</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="material-icons">flight_land</i></span>
-                                        <input type="text" class="form-control" id="endingLocation" name="endingLocation" placeholder="Enter airport code (e.g., LAX)" required>
-                                    </div>
-                                </div>
+                        <div id="savedFlightsContainer">
+                            <p class="text-center" id="loadingMessage">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Loading saved flights...
+                            </p>
+                            <ul id="savedFlightsList" class="list-group list-group-flush">
+                                <!-- Saved flights will be loaded here -->
+                            </ul>
+                            <div id="noFlightsMessage" class="text-center py-5" style="display:none;">
+                                <i class="material-icons" style="font-size: 48px;">sentiment_very_dissatisfied</i>
+                                <h4 class="mt-3">No saved flights found</h4>
+                                <p>You haven't saved any flights yet. Go to the <a href="/">search page</a> to find and save flights.</p>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="travelDate" class="form-label">Travel Date</label>
-                                    <input type="date" class="form-control" id="travelDate" name="travelDate" required>
-                                </div>
-                                <div class="col-md-6 mb-3" id="returnDateGroup" style="display:none;">
-                                    <label for="returnDate" class="form-label">Return Date</label>
-                                    <input type="date" class="form-control" id="returnDate" name="returnDate">
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="numberOfTravelers" class="form-label">Number of Travelers</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="material-icons">person</i></span>
-                                        <input type="number" class="form-control" id="numberOfTravelers" name="numberOfTravelers" min="1" value="1" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="tripType" class="form-label">Trip Type</label>
-                                    <select class="form-select" id="tripType" name="tripType">
-                                        <option value="one-way">One-Way</option>
-                                        <option value="round-trip">Round-Trip</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2 mt-3">
-                                <i class="material-icons align-middle me-1">search</i> Search Flights
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                <!-- Flight results will be displayed here after the search is performed. -->
-                <div id="flightResults" class="mt-4" style="display:none;">
-                    <div class="card shadow-lg border-0">
-                        <div class="card-header bg-success text-white py-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h4 class="mb-0 fw-bold"><i class="material-icons align-middle me-2">flight</i>Flight Results</h4>
-                                <div class="ms-3 ps-3 border-start border-light">
-                                    <button id="saveAllFlightsBtn" class="btn btn-sm btn-light me-2" style="display:none;">
-                                        <i class="material-icons align-middle">favorite_border</i> Save All
-                                    </button>
-                                    <button id="sortPriceBtn" class="btn btn-sm btn-light">
-                                        <i class="material-icons align-middle">sort</i> Sort by Price
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <ul id="resultsList" class="list-group list-group-flush"></ul>
                         </div>
                     </div>
                 </div>
@@ -205,5 +151,7 @@
     <script src="/static/js/auth.js"></script>
     <!-- Main JS -->
     <script src="/static/js/scripts.js"></script>
+    <!-- Saved Flights JS -->
+    <script src="/static/js/saved-flights.js"></script>
 </body>
 </html>

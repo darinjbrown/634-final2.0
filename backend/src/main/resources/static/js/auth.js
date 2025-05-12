@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Elements that should only be visible to authenticated users
 	const saveAllFlightsBtn = document.getElementById('saveAllFlightsBtn');
+	
+	// Save flight buttons may be added dynamically, but the container is present
+	const flightResultsList = document.getElementById('resultsList');
 
 	/**
 	 * Verify authentication status when page loads
@@ -102,11 +105,39 @@ document.addEventListener('DOMContentLoaded', () => {
 					saveAllFlightsBtn.style.display = 'inline-block';
 				}
 
+				// Enable any save flight buttons that may be present
+				enableSaveButtons();
+				
+				// Store validated user data for other components to use
+				window.currentUser = userData;
+
 				return true;
 			} else {
-				// Token is invalid or expired
-				localStorage.removeItem('jwtToken'); // Remove invalid token
+				// For development/debugging - don't automatically clear token on localhost
+				const isLocalhost = window.location.hostname === 'localhost' || 
+				                    window.location.hostname === '127.0.0.1';
+				
+				if (!isLocalhost) {
+					// Only remove the token in production environment
+					localStorage.removeItem('jwtToken');
+				} else {
+					// In development, keep the token but log the error
+					console.warn("Auth validation failed, but keeping token for development purposes");
+				}
+				
+				// Still show unauthenticated UI
 				showUnauthenticatedUI();
+				
+				// If response was 401 or 403, the token is definitely invalid
+				if (response.status === 401 || response.status === 403) {
+					console.warn("Authentication token validation failed with status:", response.status);
+					
+					// Optionally show a message, but don't in development mode
+					if (!isLocalhost && typeof showToast === 'function') {
+						showToast('Your session has expired. Please log in again.', 'warning');
+					}
+				}
+				
 				return false;
 			}
 		} catch (error) {
@@ -147,6 +178,41 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (saveAllFlightsBtn) {
 			saveAllFlightsBtn.style.display = 'none';
 		}
+		
+		// Disable any save buttons that may exist
+		disableSaveButtons();
+		
+		// Clear the user data
+		window.currentUser = null;
+	}
+	
+	/**
+	 * Enable save buttons for authenticated users
+	 */
+	function enableSaveButtons() {
+		// If flight results exist, ensure save buttons are enabled
+		if (flightResultsList) {
+			document.querySelectorAll('.save-flight-btn').forEach(btn => {
+				btn.disabled = false;
+				btn.title = 'Save this flight to your account';
+			});
+		}
+	}
+	
+	/**
+	 * Disable save buttons for unauthenticated users
+	 */
+	function disableSaveButtons() {
+		// If flight results exist, disable all save buttons
+		if (flightResultsList) {
+			document.querySelectorAll('.save-flight-btn:not(.btn-success)').forEach(btn => {
+				// Don't disable buttons that are already saved (have btn-success class)
+				if (!btn.classList.contains('btn-success')) {
+					btn.disabled = false; // We actually want to keep them enabled so they can trigger the login modal
+					btn.title = 'Log in to save flights';
+				}
+			});
+		}
 	}
 
 	/**
@@ -163,12 +229,23 @@ document.addEventListener('DOMContentLoaded', () => {
 				credentials: 'include',
 			});
 
-			if (response.ok && (await response.json()).hasRole === true) {
-				// User has admin role, show admin navigation
-				if (adminNavItem) adminNavItem.classList.remove('d-none');
+			if (response.ok) {
+				const result = await response.json();
+				if (result && (result === true || result.hasRole === true)) {
+					// User has admin role, show admin navigation
+					if (adminNavItem) adminNavItem.classList.remove('d-none');
+					
+					// Store admin status
+					window.isCurrentUserAdmin = true;
+					return true;
+				}
 			}
+			window.isCurrentUserAdmin = false;
+			return false;
 		} catch (error) {
 			console.error('Error checking admin status:', error);
+			window.isCurrentUserAdmin = false;
+			return false;
 		}
 	}
 
@@ -184,8 +261,10 @@ document.addEventListener('DOMContentLoaded', () => {
 				credentials: 'include',
 			});
 
-			// Always clear local storage token, even if server logout fails
+			// Always clear local storage token and user data, even if server logout fails
 			localStorage.removeItem('jwtToken');
+			window.currentUser = null;
+			window.isCurrentUserAdmin = false;
 
 			if (response.ok) {
 				// Redirect to home page after successful logout
@@ -208,20 +287,53 @@ document.addEventListener('DOMContentLoaded', () => {
 	 * Exported as global function for use by other scripts
 	 */
 	window.showLoginRequiredModal = function () {
-		loginModal.show();
+		if (loginModal) {
+			loginModal.show();
+		} else {
+			// Fallback if modal not available - redirect to login page
+			window.location.href = '/login';
+		}
 	};
 
 	/**
 	 * Check if user is authenticated and show login modal if not
 	 * Exported as global function for guarding protected features
 	 *
-	 * @returns {Promise<boolean>} True if authenticated, false otherwise
+	 * @returns {Promise<boolean} True if authenticated, false otherwise
 	 */
 	window.requireAuthentication = async function () {
 		const isAuthenticated = await checkAuthStatus();
 		if (!isAuthenticated) {
-			loginModal.show();
+			if (loginModal) {
+				loginModal.show();
+			} else {
+				// Fallback if modal not available
+				window.location.href = '/login';
+			}
 		}
 		return isAuthenticated;
+	};
+	
+	/**
+	 * Export important authentication functions to global scope
+	 * This allows other scripts to access these functions
+	 */
+	window.checkAuthStatus = checkAuthStatus;
+	window.getAuthHeaders = getAuthHeaders;
+	
+	/**
+	 * Allow manual setting of JWT token for development/debugging purposes
+	 * This function is only intended for development use
+	 * 
+	 * @param {string} token - The JWT token to set
+	 */
+	window.setAuthToken = function(token) {
+		if (token && typeof token === 'string') {
+			localStorage.setItem('jwtToken', token);
+			console.log("JWT token manually set. Refreshing authentication status...");
+			checkAuthStatus();
+			return true;
+		}
+		return false;
 	};
 });

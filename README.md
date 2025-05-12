@@ -38,8 +38,8 @@ backend/                          # Spring Boot application
 - **Database Integration**: Store user data, flight search history, saved flights, and bookings
 - **User Management**: Create and manage user accounts with role-based access control
 - **Security Features**: JWT authentication, password encryption, CSRF protection
-- **Search History**: Track and display user's flight search history
-- **Administrative Interface**: Admin panel for user management and system monitoring
+- **Search History**: Track and display user's flight search history --FUTURE
+- **Administrative Interface**: Admin panel for user management and system monitoring --FUTURE
 
 ## Prerequisites
 

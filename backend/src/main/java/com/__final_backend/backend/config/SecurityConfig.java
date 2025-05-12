@@ -64,9 +64,13 @@ public class SecurityConfig {
                         .csrfTokenRequestHandler(requestHandler)
                         // Ignore CSRF for stateless API endpoints that use token auth
                         .ignoringRequestMatchers("/api/auth/login", "/api/auth/logout", "/api/auth/register")
-                        .ignoringRequestMatchers("/api/flights/**", "/api/airports/**")
+                        .ignoringRequestMatchers("/api/flights/**", "/api/airports/**", "/api/saved-flights/**")
                         .ignoringRequestMatchers("/h2-console/**"))
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .defaultAuthenticationEntryPointFor(
+                                (request, response, authException) -> response.sendRedirect("/login"),
+                                request -> !request.getRequestURI().startsWith("/api/")))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
@@ -74,6 +78,7 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/register").permitAll() // Allow access to login and register pages
                         .requestMatchers("/login.html", "/register.html").permitAll() // Also allow direct HTML file
                                                                                       // access
+                        .requestMatchers("/saved-flights").permitAll() // Allow access to saved-flights page
                         .requestMatchers("/api/flights/**", "/api/airports/**").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
                         // Swagger/OpenAPI endpoints
@@ -93,7 +98,7 @@ public class SecurityConfig {
                         .contentSecurityPolicy(csp -> csp
                                 .policyDirectives(
                                         "default-src 'self'; " +
-                                                "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+                                                "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'unsafe-inline'; "
                                                 +
                                                 "style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'unsafe-inline'; "
                                                 +

@@ -47,4 +47,15 @@ public class ViewController {
   public String register() {
     return "register";
   }
+  
+  /**
+   * Maps the "/saved-flights" URL to the saved flights page.
+   * 
+   * @return String template name "saved-flights" which resolves to
+   *         src/main/resources/templates/saved-flights.html
+   */
+  @GetMapping("/saved-flights")
+  public String savedFlights() {
+    return "saved-flights";
+  }
 }
