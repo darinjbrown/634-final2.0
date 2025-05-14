@@ -75,10 +75,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/", "/index.html", "/static/**", "/h2-console/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/css/**", "/js/**").permitAll()  // Allow access to CSS and JS resources
                         .requestMatchers("/login", "/register").permitAll() // Allow access to login and register pages
                         .requestMatchers("/login.html", "/register.html").permitAll() // Also allow direct HTML file
                                                                                       // access
                         .requestMatchers("/saved-flights").permitAll() // Allow access to saved-flights page
+                        .requestMatchers("/bookings").permitAll() // Allow access to bookings page
                         .requestMatchers("/api/flights/**", "/api/airports/**").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
                         // Swagger/OpenAPI endpoints

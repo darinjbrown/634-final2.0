@@ -58,4 +58,15 @@ public class ViewController {
   public String savedFlights() {
     return "saved-flights";
   }
+  
+  /**
+   * Maps the "/bookings" URL to the bookings page.
+   * 
+   * @return String template name "bookings" which resolves to
+   *         src/main/resources/templates/bookings.html
+   */
+  @GetMapping("/bookings")
+  public String bookings() {
+    return "bookings";
+  }
 }
