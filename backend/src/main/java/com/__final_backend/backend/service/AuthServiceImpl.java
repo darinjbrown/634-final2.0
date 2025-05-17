@@ -3,9 +3,8 @@ package com.__final_backend.backend.service;
 import com.__final_backend.backend.entity.User;
 import com.__final_backend.backend.security.JwtTokenUtil;
 import com.__final_backend.backend.security.provider.UserProvider;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.__final_backend.backend.security.provider.sync.XmlToDbUserSynchronizer;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,14 +25,19 @@ public class AuthServiceImpl implements AuthService {
   private final UserProvider userProvider;
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenUtil jwtTokenUtil;
+  private final XmlToDbUserSynchronizer xmlToDbSynchronizer;
   private final Map<String, RememberMeToken> rememberMeTokenStore = new HashMap<>();
 
-  @Autowired
-  public AuthServiceImpl(UserProvider userProvider, PasswordEncoder passwordEncoder, JwtTokenUtil jwtTokenUtil) {
+  public AuthServiceImpl(UserProvider userProvider,
+      PasswordEncoder passwordEncoder,
+      JwtTokenUtil jwtTokenUtil,
+      XmlToDbUserSynchronizer xmlToDbSynchronizer) {
     this.userProvider = userProvider;
     this.passwordEncoder = passwordEncoder;
     this.jwtTokenUtil = jwtTokenUtil;
+    this.xmlToDbSynchronizer = xmlToDbSynchronizer;
   }
+
   @Override
   @Transactional
   public User register(String username, String email, String password, String firstName, String lastName) {
@@ -55,13 +59,20 @@ public class AuthServiceImpl implements AuthService {
     user.setFirstName(firstName);
     user.setLastName(lastName);
     user.setCreatedAt(LocalDateTime.now());
-    user.setUpdatedAt(LocalDateTime.now());
-
-    // Add default USER role
+    user.setUpdatedAt(LocalDateTime.now()); // Add default USER role
     user.addRole("USER");
 
-    return userProvider.save(user);
+    // Save user through the provider
+    User savedUser = userProvider.save(user);
+
+    // If using XML provider, also synchronize to database
+    if (savedUser != null) {
+      xmlToDbSynchronizer.synchronizeNewUser(username);
+    }
+
+    return savedUser;
   }
+
   @Override
   public Optional<User> authenticate(String usernameOrEmail, String password) {
     // Try to find user by username
@@ -79,6 +90,7 @@ public class AuthServiceImpl implements AuthService {
 
     return Optional.empty();
   }
+
   @Override
   public Optional<User> getCurrentUser() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -103,6 +115,7 @@ public class AuthServiceImpl implements AuthService {
     rememberMeTokenStore.put(token, rememberMeToken);
     return token;
   }
+
   @Override
   public Optional<User> validateRememberMeToken(String token) {
     RememberMeToken rememberMeToken = rememberMeTokenStore.get(token);
@@ -117,6 +130,7 @@ public class AuthServiceImpl implements AuthService {
 
     return userProvider.findByUsername(rememberMeToken.getUsername());
   }
+
   @Override
   @Transactional
   public User addRole(User user, String role) {
