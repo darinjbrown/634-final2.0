@@ -161,17 +161,9 @@ function createBookingCard(booking) {
                         <strong>Price:</strong> $${booking.totalPrice}
                     </p>
                 </div>
-            </div>
-            <hr>
+            </div>            <hr>
             <div class="row">
-                <div class="col-md-6">
-                    <h6><i class="material-icons align-middle me-1">person</i> Passenger Information</h6>
-                    <p class="mb-1"><strong>Name:</strong> ${
-						booking.passengerName
-					}</p>
-                    <p><strong>Email:</strong> ${booking.contactEmail}</p>
-                </div>
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <h6><i class="material-icons align-middle me-1">info</i> Status</h6>
                     <div class="d-flex align-items-center">
                         <span class="badge ${getStatusBadgeClass(
@@ -181,29 +173,8 @@ function createBookingCard(booking) {
                     </div>
                 </div>
             </div>
-            <div class="mt-3 text-end">
-                <button class="btn btn-outline-primary btn-sm view-details-btn" data-id="${
-					booking.id
-				}">
-                    <i class="material-icons align-middle" style="font-size: 16px;">visibility</i> View Details
-                </button>
-            </div>
         </div>
     `;
-	// Add event listener to the view details button
-	const viewDetailsBtn = card.querySelector('.view-details-btn');
-	if (viewDetailsBtn) {
-		viewDetailsBtn.addEventListener('click', () => {
-			// Show the detailed view of this booking (currently doesn't go to a new page)
-			// Instead, we'll just scroll to the booking card and highlight it
-			viewDetailsBtn.closest('.card').classList.add('border-primary');
-			setTimeout(() => {
-				viewDetailsBtn
-					.closest('.card')
-					.classList.remove('border-primary');
-			}, 3000);
-		});
-	}
 
 	return card;
 }
@@ -307,16 +278,32 @@ function populateBookingForm(flight) {
             </div>
         `;
 	}
-
 	// Autofill user info if available
 	window
 		.getCurrentUser()
 		.then((user) => {
 			if (user) {
-				document.getElementById('passengerName').value =
-					user.fullName || '';
+				// Handle name in order of preference: fullName, firstName+lastName, username
+				let passengerName = '';
+				if (user.fullName) {
+					passengerName = user.fullName;
+				} else if (user.firstName && user.lastName) {
+					passengerName = `${user.firstName} ${user.lastName}`;
+				} else if (user.firstName) {
+					passengerName = user.firstName;
+				} else if (user.username) {
+					passengerName = user.username;
+				}
+
+				document.getElementById('passengerName').value = passengerName;
 				document.getElementById('contactEmail').value =
 					user.email || '';
+
+				// Populate phone number if available
+				if (user.phoneNumber) {
+					document.getElementById('phoneNumber').value =
+						user.phoneNumber;
+				}
 			}
 		})
 		.catch((error) => {

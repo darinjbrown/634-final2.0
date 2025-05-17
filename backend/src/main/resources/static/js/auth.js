@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Elements that should only be visible to authenticated users
 	const saveAllFlightsBtn = document.getElementById('saveAllFlightsBtn');
-	
+
 	// Save flight buttons may be added dynamically, but the container is present
 	const flightResultsList = document.getElementById('resultsList');
 
@@ -107,37 +107,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				// Enable any save flight buttons that may be present
 				enableSaveButtons();
-				
+
 				// Store validated user data for other components to use
 				window.currentUser = userData;
 
 				return true;
 			} else {
 				// For development/debugging - don't automatically clear token on localhost
-				const isLocalhost = window.location.hostname === 'localhost' || 
-				                    window.location.hostname === '127.0.0.1';
-				
+				const isLocalhost =
+					window.location.hostname === 'localhost' ||
+					window.location.hostname === '127.0.0.1';
+
 				if (!isLocalhost) {
 					// Only remove the token in production environment
 					localStorage.removeItem('jwtToken');
 				} else {
 					// In development, keep the token but log the error
-					console.warn("Auth validation failed, but keeping token for development purposes");
+					console.warn(
+						'Auth validation failed, but keeping token for development purposes'
+					);
 				}
-				
+
 				// Still show unauthenticated UI
 				showUnauthenticatedUI();
-				
+
 				// If response was 401 or 403, the token is definitely invalid
 				if (response.status === 401 || response.status === 403) {
-					console.warn("Authentication token validation failed with status:", response.status);
-					
+					console.warn(
+						'Authentication token validation failed with status:',
+						response.status
+					);
+
 					// Optionally show a message, but don't in development mode
 					if (!isLocalhost && typeof showToast === 'function') {
-						showToast('Your session has expired. Please log in again.', 'warning');
+						showToast(
+							'Your session has expired. Please log in again.',
+							'warning'
+						);
 					}
 				}
-				
+
 				return false;
 			}
 		} catch (error) {
@@ -178,40 +187,42 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (saveAllFlightsBtn) {
 			saveAllFlightsBtn.style.display = 'none';
 		}
-		
+
 		// Disable any save buttons that may exist
 		disableSaveButtons();
-		
+
 		// Clear the user data
 		window.currentUser = null;
 	}
-	
+
 	/**
 	 * Enable save buttons for authenticated users
 	 */
 	function enableSaveButtons() {
 		// If flight results exist, ensure save buttons are enabled
 		if (flightResultsList) {
-			document.querySelectorAll('.save-flight-btn').forEach(btn => {
+			document.querySelectorAll('.save-flight-btn').forEach((btn) => {
 				btn.disabled = false;
 				btn.title = 'Save this flight to your account';
 			});
 		}
 	}
-	
+
 	/**
 	 * Disable save buttons for unauthenticated users
 	 */
 	function disableSaveButtons() {
 		// If flight results exist, disable all save buttons
 		if (flightResultsList) {
-			document.querySelectorAll('.save-flight-btn:not(.btn-success)').forEach(btn => {
-				// Don't disable buttons that are already saved (have btn-success class)
-				if (!btn.classList.contains('btn-success')) {
-					btn.disabled = false; // We actually want to keep them enabled so they can trigger the login modal
-					btn.title = 'Log in to save flights';
-				}
-			});
+			document
+				.querySelectorAll('.save-flight-btn:not(.btn-success)')
+				.forEach((btn) => {
+					// Don't disable buttons that are already saved (have btn-success class)
+					if (!btn.classList.contains('btn-success')) {
+						btn.disabled = false; // We actually want to keep them enabled so they can trigger the login modal
+						btn.title = 'Log in to save flights';
+					}
+				});
 		}
 	}
 
@@ -234,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				if (result && (result === true || result.hasRole === true)) {
 					// User has admin role, show admin navigation
 					if (adminNavItem) adminNavItem.classList.remove('d-none');
-					
+
 					// Store admin status
 					window.isCurrentUserAdmin = true;
 					return true;
@@ -313,27 +324,55 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 		return isAuthenticated;
 	};
-	
+
 	/**
 	 * Export important authentication functions to global scope
 	 * This allows other scripts to access these functions
 	 */
 	window.checkAuthStatus = checkAuthStatus;
 	window.getAuthHeaders = getAuthHeaders;
-	
 	/**
 	 * Allow manual setting of JWT token for development/debugging purposes
 	 * This function is only intended for development use
-	 * 
+	 *
 	 * @param {string} token - The JWT token to set
 	 */
-	window.setAuthToken = function(token) {
+	window.setAuthToken = function (token) {
 		if (token && typeof token === 'string') {
 			localStorage.setItem('jwtToken', token);
-			console.log("JWT token manually set. Refreshing authentication status...");
+			console.log(
+				'JWT token manually set. Refreshing authentication status...'
+			);
 			checkAuthStatus();
 			return true;
 		}
 		return false;
+	};
+
+	/**
+	 * Get the current authenticated user's information
+	 * Returns a Promise resolved with the user data or rejected if not authenticated
+	 *
+	 * @returns {Promise<Object>} Promise resolved with user data or rejected if not authenticated
+	 */
+	window.getCurrentUser = function () {
+		return new Promise((resolve, reject) => {
+			if (window.currentUser) {
+				resolve(window.currentUser);
+			} else {
+				// Try to fetch user info if not already in memory
+				checkAuthStatus()
+					.then((isAuthenticated) => {
+						if (isAuthenticated && window.currentUser) {
+							resolve(window.currentUser);
+						} else {
+							reject(new Error('User not authenticated'));
+						}
+					})
+					.catch((error) => {
+						reject(error);
+					});
+			}
+		});
 	};
 });
