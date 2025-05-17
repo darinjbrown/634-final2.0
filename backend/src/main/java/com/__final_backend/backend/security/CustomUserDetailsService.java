@@ -1,7 +1,7 @@
 package com.__final_backend.backend.security;
 
 import com.__final_backend.backend.entity.User;
-import com.__final_backend.backend.repository.UserRepository;
+import com.__final_backend.backend.security.provider.UserProvider;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -10,26 +10,27 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Custom implementation of UserDetailsService for database authentication.
+ * Custom implementation of UserDetailsService that uses the UserProvider
+ * abstraction.
+ * This allows switching between different user data sources.
  */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-  private final UserRepository userRepository;
+  private final UserProvider userProvider;
 
-  public CustomUserDetailsService(UserRepository userRepository) {
-    this.userRepository = userRepository;
+  public CustomUserDetailsService(UserProvider userProvider) {
+    this.userProvider = userProvider;
   }
 
   @Override
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    User user = userRepository.findByUsername(username)
+    User user = userProvider.findByUsername(username)
         .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
     List<SimpleGrantedAuthority> authorities = new ArrayList<>();
