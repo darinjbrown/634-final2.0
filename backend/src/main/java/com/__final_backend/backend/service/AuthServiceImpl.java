@@ -1,8 +1,8 @@
 package com.__final_backend.backend.service;
 
 import com.__final_backend.backend.entity.User;
-import com.__final_backend.backend.repository.UserRepository;
 import com.__final_backend.backend.security.JwtTokenUtil;
+import com.__final_backend.backend.security.provider.UserProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,29 +23,27 @@ import java.util.UUID;
  */
 @Service
 public class AuthServiceImpl implements AuthService {
-
-  private final UserRepository userRepository;
+  private final UserProvider userProvider;
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenUtil jwtTokenUtil;
   private final Map<String, RememberMeToken> rememberMeTokenStore = new HashMap<>();
 
   @Autowired
-  public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenUtil jwtTokenUtil) {
-    this.userRepository = userRepository;
+  public AuthServiceImpl(UserProvider userProvider, PasswordEncoder passwordEncoder, JwtTokenUtil jwtTokenUtil) {
+    this.userProvider = userProvider;
     this.passwordEncoder = passwordEncoder;
     this.jwtTokenUtil = jwtTokenUtil;
   }
-
   @Override
   @Transactional
   public User register(String username, String email, String password, String firstName, String lastName) {
     // Check if username already exists
-    if (userRepository.existsByUsername(username)) {
+    if (userProvider.existsByUsername(username)) {
       throw new IllegalArgumentException("Username already exists");
     }
 
     // Check if email already exists
-    if (userRepository.existsByEmail(email)) {
+    if (userProvider.existsByEmail(email)) {
       throw new IllegalArgumentException("Email already exists");
     }
 
@@ -62,17 +60,16 @@ public class AuthServiceImpl implements AuthService {
     // Add default USER role
     user.addRole("USER");
 
-    return userRepository.save(user);
+    return userProvider.save(user);
   }
-
   @Override
   public Optional<User> authenticate(String usernameOrEmail, String password) {
     // Try to find user by username
-    Optional<User> userOptional = userRepository.findByUsername(usernameOrEmail);
+    Optional<User> userOptional = userProvider.findByUsername(usernameOrEmail);
 
     // If not found, try by email
     if (userOptional.isEmpty()) {
-      userOptional = userRepository.findByEmail(usernameOrEmail);
+      userOptional = userProvider.findByEmail(usernameOrEmail);
     }
 
     // Check if user exists and password matches
@@ -82,7 +79,6 @@ public class AuthServiceImpl implements AuthService {
 
     return Optional.empty();
   }
-
   @Override
   public Optional<User> getCurrentUser() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -92,7 +88,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-    return userRepository.findByUsername(userDetails.getUsername());
+    return userProvider.findByUsername(userDetails.getUsername());
   }
 
   @Override
@@ -107,7 +103,6 @@ public class AuthServiceImpl implements AuthService {
     rememberMeTokenStore.put(token, rememberMeToken);
     return token;
   }
-
   @Override
   public Optional<User> validateRememberMeToken(String token) {
     RememberMeToken rememberMeToken = rememberMeTokenStore.get(token);
@@ -120,21 +115,20 @@ public class AuthServiceImpl implements AuthService {
       return Optional.empty();
     }
 
-    return userRepository.findByUsername(rememberMeToken.getUsername());
+    return userProvider.findByUsername(rememberMeToken.getUsername());
   }
-
   @Override
   @Transactional
   public User addRole(User user, String role) {
     user.addRole(role);
-    return userRepository.save(user);
+    return userProvider.save(user);
   }
 
   @Override
   @Transactional
   public User removeRole(User user, String role) {
     user.getRoles().remove(role);
-    return userRepository.save(user);
+    return userProvider.save(user);
   }
 
   @Override
