@@ -35,11 +35,30 @@ backend/                          # Spring Boot application
 - **Responsive Design**: Material UI-inspired Bootstrap design for all screen sizes
 - **Real-time Validation**: Form validation with clear error messages
 - **Flight Results Display**: Clearly formatted flight details and pricing
-- **Database Integration**: Store user data, flight search history, saved flights, and bookings
-- **User Management**: Create and manage user accounts with role-based access control
+- **User Account Management**: Create and manage user accounts with profile information
+- **Booking System**: Complete flight booking functionality with confirmation
+- **Saved Flights**: Ability to save and retrieve favorite flight options
 - **Security Features**: JWT authentication, password encryption, CSRF protection
+- **Role-Based Access**: Different permissions for regular users and administrators
+- **Remember Me**: Persistent login functionality for improved user experience
+- **Customizable UI**: Status indicators and user-friendly messages throughout the application
 - **Search History**: Track and display user's flight search history --FUTURE
 - **Administrative Interface**: Admin panel for user management and system monitoring --FUTURE
+
+## User Interface Overview
+
+### Main Pages
+- **Home/Flight Search**: The main entry point for flight searches
+- **My Bookings**: View all your flight bookings with status information
+- **Saved Flights**: Access your saved flight options for future reference
+- **Login/Register**: User authentication pages
+
+### User Experience Features
+- **Responsive Navigation**: Consistent navigation bar across all pages
+- **Status Indicators**: Color-coded statuses for bookings (Confirmed, Pending, Cancelled)
+- **Loading Indicators**: Loading spinners for asynchronous operations
+- **Error Handling**: User-friendly error messages and recovery options
+- **Confirmation Messages**: Clear feedback when actions are completed successfully
 
 ## Prerequisites
 
@@ -114,8 +133,8 @@ Ensure the following are installed on your system:
 
 ### Admin Access
 1. To access administrative features, log in with the following credentials:
-   - Username: `AdminTester`
-   - Password: `Test634`
+   - Username: `AdminTester` (AdminTester2 in XML)
+   - Password: `Test634`(Test634A in XML)
 2. After logging in as admin, you'll see an "Admin" link in the navigation bar
 3. Click this link to access the administrative dashboard where you can:
    - View and manage users
@@ -258,18 +277,6 @@ The application uses Flyway for database migrations. The schema includes:
    mvn test
    ```
 
-### Amadeus API Connection Test
-1. Navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-2. Run the `AmadeusAPIConnectionTest`:
-   ```bash
-   ./mvnw test -Dtest=AmadeusAPIConnectionTest
-   ```
-   or
-   ```bash
-   mvn test -Dtest=AmadeusAPIConnectionTest
    ```
 
 ## API Reference
@@ -300,6 +307,31 @@ The application integrates with the Amadeus Flight Offers Search API and provide
 - `POST /api/admin/users/{userId}/demote` - Remove admin role from a user
 - `POST /api/admin/users/{userId}/roles/{role}` - Add a role to a user
 - `DELETE /api/admin/users/{userId}/roles/{role}` - Remove a role from a user
+
+## Development Guide
+
+### Modifying Frontend Components
+To modify frontend components (HTML templates and JavaScript):
+
+1. HTML templates are located in `backend/src/main/resources/templates/`
+2. JavaScript files are in `backend/src/main/resources/static/js/`
+3. CSS styles are in `backend/src/main/resources/static/css/`
+
+### Key JavaScript Files
+- **auth.js**: Handles authentication and user management
+- **bookings.js**: Manages the bookings page functionality
+- **scripts.js**: Core functionality for the flight search page
+- **saved-flights.js**: Handles saved flights operations
+
+### Adding New Features
+When adding new features:
+
+1. Make sure to maintain the existing authentication flow
+2. Update relevant JavaScript files for frontend logic
+3. Modify controller classes for new endpoints
+4. Add service methods as needed
+5. Test thoroughly across different browsers
+6. Update this documentation to reflect new features
 
 ## Configuration
 
@@ -351,6 +383,7 @@ logging.level.com.__final_backend=WARN
 - CORS is configured to allow requests from `http://localhost:3000` and `http://localhost:3001`
 - The database automatically initializes with sample data for testing
 - A test admin account (AdminTester/Test634) is created automatically on startup
+- When running XML authentication, previous users created will persist, but their database data will be lost on restart
 
 ## Troubleshooting
 - If `mvnw` is not recognized, ensure you are in the correct directory and the Maven Wrapper files exist
