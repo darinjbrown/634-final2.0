@@ -156,6 +156,45 @@ The application uses an embedded H2 database by default for development and test
    - Comment out the H2 configuration section
    - Update the MySQL username and password to match your installation
 
+## Authentication Provider Configuration
+
+The application supports multiple authentication provider options, allowing you to switch between database (default) and XML file-based user storage.
+
+### Provider Options
+
+1. **Database Authentication (Default)** 
+   - Uses the configured database (H2 or MySQL) to store user credentials
+   - All user data persists in the database tables
+
+2. **XML Authentication**
+   - Stores user data in an XML file
+   - File location: `src/main/resources/xml/users.xml`
+   - User data persists between application restarts
+   - Useful for simple deployments or testing scenarios
+
+### Switching Between Providers
+
+To switch authentication providers, modify the following settings in `application.properties`:
+
+```properties
+# Authentication provider configuration
+# Options: database or xml
+app.auth.provider=database
+
+# XML user file path (when using XML provider)
+app.auth.xml-file=src/main/resources/xml/users.xml
+```
+
+Simply change `app.auth.provider=database` to `app.auth.provider=xml` to switch to XML-based authentication.
+
+### Implementation Details
+
+The authentication system uses an abstraction layer that allows different storage mechanisms without changing the business logic. This architecture:
+
+- Maintains a consistent security approach regardless of storage mechanism
+- Preserves all security features (password encryption, JWT token validation)
+- Allows seamless switching between providers without code changes
+
 ## Database Schema
 
 The application uses Flyway for database migrations. The schema includes:
