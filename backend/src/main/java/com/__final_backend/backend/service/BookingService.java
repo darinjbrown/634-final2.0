@@ -5,13 +5,13 @@ import com.__final_backend.backend.entity.BookingRecord;
 import com.__final_backend.backend.entity.User;
 import com.__final_backend.backend.repository.BookingRecordRepository;
 import com.__final_backend.backend.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityNotFoundException;
-import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -20,10 +20,15 @@ import java.util.stream.Collectors;
  * Service for managing booking operations
  */
 @Service
-@RequiredArgsConstructor
 public class BookingService {
   private final BookingRecordRepository bookingRecordRepository;
   private final UserRepository userRepository;
+
+  @Autowired
+  public BookingService(BookingRecordRepository bookingRecordRepository, UserRepository userRepository) {
+    this.bookingRecordRepository = bookingRecordRepository;
+    this.userRepository = userRepository;
+  }
 
   /**
    * Get all bookings for a user
@@ -86,30 +91,24 @@ public class BookingService {
     booking.setFlightNumber(bookingDTO.getFlightNumber());
     booking.setPassengerCount(bookingDTO.getPassengerCount());
     booking.setTotalPrice(bookingDTO.getTotalPrice());
-    booking.setBookingStatus("CONFIRMED"); // Default status
-
-    // Note: The entity doesn't have fields for contactEmail, contactPhone, etc.
-    // If you need these, the entity will need to be updated
-
+    booking.setBookingStatus(bookingDTO.getBookingStatus() != null ? bookingDTO.getBookingStatus() : "CONFIRMED"); // Save
+                                                                                                                   // directly
+                                                                                                                   // using
+                                                                                                                   // repository
+                                                                                                                   // since
+                                                                                                                   // we
+                                                                                                                   // don't
+                                                                                                                   // need
+                                                                                                                   // the
+                                                                                                                   // db
+                                                                                                                   // service
+                                                                                                                   // for
+                                                                                                                   // this
+                                                                                                                   // operation
     BookingRecord savedBooking = bookingRecordRepository.save(booking);
 
     // For response, we need to create a DTO that matches what the client expects
-    // Even though our entity doesn't have all these fields
-    BookingDTO responseDTO = new BookingDTO();
-    responseDTO.setId(savedBooking.getId());
-    responseDTO.setBookingReference(savedBooking.getBookingReference());
-    responseDTO.setUserId(savedBooking.getUser().getId());
-    responseDTO.setUsername(savedBooking.getUser().getUsername());
-    responseDTO.setDepartureAirport(savedBooking.getOrigin());
-    responseDTO.setArrivalAirport(savedBooking.getDestination());
-    responseDTO.setDepartureTime(savedBooking.getDepartureTime());
-    responseDTO.setArrivalTime(savedBooking.getArrivalTime());
-    responseDTO.setAirline(savedBooking.getAirlineCode());
-    responseDTO.setFlightNumber(savedBooking.getFlightNumber());
-    responseDTO.setPassengerCount(savedBooking.getPassengerCount());
-    responseDTO.setTotalPrice(savedBooking.getTotalPrice());
-    responseDTO.setBookingStatus(savedBooking.getBookingStatus());
-    responseDTO.setBookingDate(savedBooking.getCreatedAt());
+    BookingDTO responseDTO = BookingDTO.fromEntity(savedBooking);
 
     // Copy over additional fields from the input DTO
     responseDTO.setContactEmail(bookingDTO.getContactEmail());
@@ -141,10 +140,6 @@ public class BookingService {
 
     // Update fields that are allowed to be changed
     booking.setPassengerCount(bookingDTO.getPassengerCount());
-
-    // Note: ContactEmail, ContactPhone, and AdditionalNotes fields don't exist in
-    // BookingRecord
-    // Only update the fields that exist in the entity
 
     BookingRecord updatedBooking = bookingRecordRepository.save(booking);
 

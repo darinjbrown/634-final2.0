@@ -132,36 +132,33 @@ function createBookingCard(booking) {
         </div>
         <div class="card-body">
             <div class="row mb-3">
-                <div class="col-md-6">
-                    <h5 class="card-title">
+                <div class="col-md-6">                    <h5 class="card-title">
                         <i class="material-icons align-middle me-2">flight</i>
-                        ${booking.flight.airlineName} - ${
-		booking.flight.flightNumber
-	}
+                        ${booking.airline} - ${booking.flightNumber}
                     </h5>
                     <p class="card-text mb-1">
-                        <strong>From:</strong> ${booking.flight.origin}
+                        <strong>From:</strong> ${booking.departureAirport}
                     </p>
                     <p class="card-text">
-                        <strong>To:</strong> ${booking.flight.destination}
+                        <strong>To:</strong> ${booking.arrivalAirport}
                     </p>
                 </div>
                 <div class="col-md-6">
                     <p class="card-text mb-1">
                         <i class="material-icons align-middle me-1">schedule</i>
                         <strong>Departure:</strong> ${formatDateTime(
-							booking.flight.departureTime
+							booking.departureTime
 						)}
                     </p>
                     <p class="card-text mb-1">
                         <i class="material-icons align-middle me-1">schedule</i>
                         <strong>Arrival:</strong> ${formatDateTime(
-							booking.flight.arrivalTime
+							booking.arrivalTime
 						)}
                     </p>
                     <p class="card-text">
                         <i class="material-icons align-middle me-1">attach_money</i>
-                        <strong>Price:</strong> $${booking.flight.price}
+                        <strong>Price:</strong> $${booking.totalPrice}
                     </p>
                 </div>
             </div>
@@ -193,13 +190,18 @@ function createBookingCard(booking) {
             </div>
         </div>
     `;
-
 	// Add event listener to the view details button
 	const viewDetailsBtn = card.querySelector('.view-details-btn');
 	if (viewDetailsBtn) {
 		viewDetailsBtn.addEventListener('click', () => {
-			// Implement view details functionality if needed
-			window.location.href = `/bookings/${booking.id}`;
+			// Show the detailed view of this booking (currently doesn't go to a new page)
+			// Instead, we'll just scroll to the booking card and highlight it
+			viewDetailsBtn.closest('.card').classList.add('border-primary');
+			setTimeout(() => {
+				viewDetailsBtn
+					.closest('.card')
+					.classList.remove('border-primary');
+			}, 3000);
 		});
 	}
 
@@ -209,11 +211,11 @@ function createBookingCard(booking) {
 /**
  * Load flight details for creating a new booking
  *
- * @param {string} flightId - The ID of the flight to book
+ * @param {string} flightId - The ID of the saved flight to book
  */
 async function loadFlightForBooking(flightId) {
 	try {
-		const response = await fetch(`/api/flights/${flightId}`, {
+		const response = await fetch(`/api/saved-flights/${flightId}`, {
 			method: 'GET',
 			headers: window.getAuthHeaders(),
 		});
@@ -271,7 +273,9 @@ function populateBookingForm(flight) {
                         <div class="col-md-6">
                             <h5>
                                 <i class="material-icons align-middle me-2">flight</i>
-                                ${flight.airlineName} - ${flight.flightNumber}
+                                ${flight.airlineName || flight.airlineCode} - ${
+			flight.flightNumber
+		}
                             </h5>
                             <p class="mb-1"><strong>From:</strong> ${
 								flight.origin
@@ -293,9 +297,9 @@ function populateBookingForm(flight) {
                             </p>
                             <p class="mb-1">
                                 <i class="material-icons align-middle me-1">attach_money</i>
-                                <strong>Price:</strong> <span class="fw-bold text-primary">$${
-									flight.price
-								}</span>
+                                <strong>Price:</strong> <span class="fw-bold text-primary">${
+									flight.currency || '$'
+								}${flight.price}</span>
                             </p>
                         </div>
                     </div>
@@ -333,14 +337,37 @@ async function handleBookingSubmit(event) {
 	submitBtn.innerHTML =
 		'<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
 	submitBtn.disabled = true;
-
 	try {
+		// Get the flight ID from the form
+		const flightId = document.getElementById('flightId').value;
+
+		// First get the saved flight data to create the booking
+		const flightResponse = await fetch(`/api/saved-flights/${flightId}`, {
+			method: 'GET',
+			headers: window.getAuthHeaders(),
+		});
+
+		if (!flightResponse.ok) {
+			throw new Error('Failed to get flight details for booking');
+		}
+
+		const flight = await flightResponse.json();
+
+		// Create booking data with all required fields
 		const formData = {
-			flightId: document.getElementById('flightId').value,
-			passengerName: document.getElementById('passengerName').value,
+			flightId: flight.id,
+			departureAirport: flight.origin,
+			arrivalAirport: flight.destination,
+			departureTime: flight.departureTime,
+			arrivalTime: flight.arrivalTime,
+			airline: flight.airlineCode,
+			flightNumber: flight.flightNumber,
+			passengerCount: 1,
+			totalPrice: flight.price,
+			bookingStatus: 'CONFIRMED',
 			contactEmail: document.getElementById('contactEmail').value,
-			phoneNumber: document.getElementById('phoneNumber').value,
-			specialRequests: document.getElementById('specialRequests').value,
+			contactPhone: document.getElementById('phoneNumber').value,
+			additionalNotes: document.getElementById('specialRequests').value,
 		};
 
 		const response = await fetch('/api/bookings', {
@@ -361,7 +388,8 @@ async function handleBookingSubmit(event) {
 		// Show success message
 		document.getElementById('bookingForm').style.display = 'none';
 		document.getElementById('bookingSuccess').style.display = 'block';
-		document.getElementById('bookingReference').textContent = booking.id;
+		document.getElementById('bookingReference').textContent =
+			booking.bookingReference || booking.id;
 	} catch (error) {
 		console.error('Error creating booking:', error);
 		document.getElementById('bookingError').textContent =
@@ -430,6 +458,25 @@ function getStatusBadgeClass(status) {
 			return 'bg-danger';
 		default:
 			return 'bg-secondary';
+	}
+}
+
+/**
+ * Get a descriptive message for the booking status
+ *
+ * @param {string} status - Booking status
+ * @returns {string} Status description
+ */
+function getStatusMessage(status) {
+	switch (status?.toUpperCase()) {
+		case 'CONFIRMED':
+			return 'Your booking is confirmed and ready to go!';
+		case 'PENDING':
+			return 'Your booking is being processed.';
+		case 'CANCELLED':
+			return 'This booking has been cancelled.';
+		default:
+			return 'Status unknown';
 	}
 }
 

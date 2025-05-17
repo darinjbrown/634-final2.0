@@ -196,8 +196,88 @@ async function handleDeleteFlight(event) {
  *
  * @param {Event} event - Click event
  */
-function handleBookFlight(event) {
+async function handleBookFlight(event) {
 	const flightId = event.currentTarget.getAttribute('data-id');
-	// Redirect to booking page with flight ID
-	window.location.href = `/bookings/new?flightId=${flightId}`;
+	const bookButton = event.currentTarget;
+	
+	// Disable button and show loading state
+	bookButton.disabled = true;
+	const originalText = bookButton.innerHTML;
+	bookButton.innerHTML = `
+		<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+		Booking...
+	`;
+	
+	try {
+		// First, get the saved flight details to create the booking
+		const savedFlightResponse = await fetch(`/api/saved-flights/${flightId}`, {
+			method: 'GET',
+			headers: window.getAuthHeaders()
+		});
+		
+		if (!savedFlightResponse.ok) {
+			throw new Error('Failed to fetch flight details');
+		}
+		
+		const savedFlight = await savedFlightResponse.json();
+		
+		// Create a booking using the saved flight data
+		const response = await fetch('/api/bookings', {
+			method: 'POST',
+			headers: {
+				...window.getAuthHeaders(),
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				// Map saved flight data to booking DTO
+				flightId: savedFlight.id.toString(),
+				departureAirport: savedFlight.origin,
+				arrivalAirport: savedFlight.destination,
+				departureTime: savedFlight.departureTime,
+				arrivalTime: savedFlight.arrivalTime,
+				airline: savedFlight.airlineCode,
+				flightNumber: savedFlight.flightNumber,
+				passengerCount: 1,
+				totalPrice: savedFlight.price,
+				bookingStatus: 'CONFIRMED',
+				bookingDate: new Date().toISOString()
+			})
+		});
+		
+		if (!response.ok) {
+			throw new Error('Failed to book flight');
+		}
+		
+		// Get the button's parent li element
+		const listItem = bookButton.closest('li');
+		
+		// Show success message
+		bookButton.classList.remove('btn-success');
+		bookButton.classList.add('btn-outline-success');
+		bookButton.innerHTML = `
+			<i class="material-icons align-middle" style="font-size: 16px;">check_circle</i> Booked
+		`;
+		bookButton.disabled = true;
+		
+		// Add a success alert to the list item
+		const successAlert = document.createElement('div');
+		successAlert.className = 'alert alert-success mt-2';
+		successAlert.innerHTML = 'Flight booked successfully! View details in the <a href="/bookings">Bookings page</a>.';
+		listItem.appendChild(successAlert);
+		
+		// Hide alert after 5 seconds
+		setTimeout(() => {
+			successAlert.remove();
+		}, 5000);
+		
+	} catch (error) {
+		console.error('Error booking flight:', error);
+		
+		// Reset button state
+		bookButton.disabled = false;
+		bookButton.innerHTML = originalText;
+		
+		// Show error alert
+		alert('Failed to book the flight. Please try again.');
+	}
 }

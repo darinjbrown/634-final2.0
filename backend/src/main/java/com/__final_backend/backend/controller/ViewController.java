@@ -47,7 +47,7 @@ public class ViewController {
   public String register() {
     return "register";
   }
-  
+
   /**
    * Maps the "/saved-flights" URL to the saved flights page.
    * 
@@ -58,7 +58,7 @@ public class ViewController {
   public String savedFlights() {
     return "saved-flights";
   }
-  
+
   /**
    * Maps the "/bookings" URL to the bookings page.
    * 
@@ -67,6 +67,18 @@ public class ViewController {
    */
   @GetMapping("/bookings")
   public String bookings() {
+    return "bookings";
+  }
+
+  /**
+   * Maps the "/bookings/new" URL to the booking creation page.
+   * This route is used when creating a new booking from a saved flight.
+   * 
+   * @return String template name "bookings" with a query parameter for the flight
+   *         ID
+   */
+  @GetMapping("/bookings/new")
+  public String newBooking() {
     return "bookings";
   }
 }
