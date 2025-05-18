@@ -2,35 +2,47 @@ package com.__final_backend.backend.dto;
 
 /**
  * Data Transfer Object (DTO) for flight information.
+ * <p>
  * Encapsulates details about a flight such as airline, flight number, departure
- * and arrival locations, times, and price.
+ * and arrival locations, times, and price. This class is used to transfer
+ * flight data
+ * between the service layer and API controllers in the SkyExplorer application.
+ * </p>
  */
 public class FlightDTO {
-    /** The name of the airline operating the flight */
+    /** The name of the airline operating the flight (e.g., "American Airlines"). */
     private String airline;
 
-    /** The flight identification number */
+    /** The flight identification number (e.g., "AA123"). */
     private String flightNumber;
 
-    /** The departure location/airport code */
+    /** The departure location/airport code (3-letter IATA code, e.g., "JFK"). */
     private String departure;
 
-    /** The arrival location/airport code */
+    /** The arrival location/airport code (3-letter IATA code, e.g., "LAX"). */
     private String arrival;
-
-    /** The departure time of the flight */
+    /**
+     * The departure time of the flight in ISO format or human-readable format.
+     * May include date and time information.
+     */
     private String departureTime;
 
-    /** The arrival time of the flight */
+    /**
+     * The arrival time of the flight in ISO format or human-readable format.
+     * May include date and time information.
+     */
     private String arrivalTime;
 
-    /** The price of the flight ticket */
+    /**
+     * The price of the flight ticket in the default currency (typically USD).
+     * Represented as a floating-point value.
+     */
     private Double price;
 
     /**
      * Gets the airline name.
-     * 
-     * @return The name of the airline operating the flight
+     *
+     * @return the name of the airline operating the flight
      */
     public String getAirline() {
         return airline;
@@ -38,8 +50,8 @@ public class FlightDTO {
 
     /**
      * Sets the airline name.
-     * 
-     * @param airline The name of the airline operating the flight
+     *
+     * @param airline the name of the airline operating the flight
      */
     public void setAirline(String airline) {
         this.airline = airline;
@@ -47,8 +59,8 @@ public class FlightDTO {
 
     /**
      * Gets the flight number.
-     * 
-     * @return The flight identification number
+     *
+     * @return the flight identification number
      */
     public String getFlightNumber() {
         return flightNumber;
@@ -56,8 +68,8 @@ public class FlightDTO {
 
     /**
      * Sets the flight number.
-     * 
-     * @param flightNumber The flight identification number
+     *
+     * @param flightNumber the flight identification number
      */
     public void setFlightNumber(String flightNumber) {
         this.flightNumber = flightNumber;
@@ -65,8 +77,8 @@ public class FlightDTO {
 
     /**
      * Gets the departure location.
-     * 
-     * @return The departure location/airport code
+     *
+     * @return the departure location/airport code (3-letter IATA code)
      */
     public String getDeparture() {
         return departure;
@@ -74,8 +86,8 @@ public class FlightDTO {
 
     /**
      * Sets the departure location.
-     * 
-     * @param departure The departure location/airport code
+     *
+     * @param departure the departure location/airport code (3-letter IATA code)
      */
     public void setDeparture(String departure) {
         this.departure = departure;
@@ -83,8 +95,8 @@ public class FlightDTO {
 
     /**
      * Gets the arrival location.
-     * 
-     * @return The arrival location/airport code
+     *
+     * @return the arrival location/airport code (3-letter IATA code)
      */
     public String getArrival() {
         return arrival;
@@ -92,8 +104,8 @@ public class FlightDTO {
 
     /**
      * Sets the arrival location.
-     * 
-     * @param arrival The arrival location/airport code
+     *
+     * @param arrival the arrival location/airport code (3-letter IATA code)
      */
     public void setArrival(String arrival) {
         this.arrival = arrival;
@@ -101,8 +113,8 @@ public class FlightDTO {
 
     /**
      * Gets the departure time.
-     * 
-     * @return The departure time of the flight
+     *
+     * @return the departure time of the flight
      */
     public String getDepartureTime() {
         return departureTime;
@@ -110,8 +122,8 @@ public class FlightDTO {
 
     /**
      * Sets the departure time.
-     * 
-     * @param departureTime The departure time of the flight
+     *
+     * @param departureTime the departure time of the flight
      */
     public void setDepartureTime(String departureTime) {
         this.departureTime = departureTime;
@@ -119,8 +131,8 @@ public class FlightDTO {
 
     /**
      * Gets the arrival time.
-     * 
-     * @return The arrival time of the flight
+     *
+     * @return the arrival time of the flight
      */
     public String getArrivalTime() {
         return arrivalTime;
@@ -128,8 +140,8 @@ public class FlightDTO {
 
     /**
      * Sets the arrival time.
-     * 
-     * @param arrivalTime The arrival time of the flight
+     *
+     * @param arrivalTime the arrival time of the flight
      */
     public void setArrivalTime(String arrivalTime) {
         this.arrivalTime = arrivalTime;
@@ -137,8 +149,8 @@ public class FlightDTO {
 
     /**
      * Gets the flight price.
-     * 
-     * @return The price of the flight ticket
+     *
+     * @return the price of the flight ticket
      */
     public Double getPrice() {
         return price;
@@ -146,8 +158,8 @@ public class FlightDTO {
 
     /**
      * Sets the flight price.
-     * 
-     * @param price The price of the flight ticket
+     *
+     * @param price the price of the flight ticket
      */
     public void setPrice(Double price) {
         this.price = price;

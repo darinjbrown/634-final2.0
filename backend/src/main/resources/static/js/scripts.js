@@ -253,8 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				event.currentTarget.classList.add('btn-success');
 			} else {
 			}
-		} catch (error) {
-		}
+		} catch (error) {}
 	}
 
 	/**

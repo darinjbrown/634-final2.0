@@ -7,42 +7,64 @@ import java.time.LocalDate;
 
 /**
  * Data Transfer Object (DTO) representing flight search request parameters.
+ * <p>
  * This class encapsulates search criteria for flights including locations,
  * dates,
- * number of travelers, and trip type.
+ * number of travelers, and trip type. It is used for processing flight search
+ * requests
+ * through the API and includes validation constraints for the input fields.
+ * </p>
  */
 public class FlightSearchRequestDTO {
-    /** The starting location/airport code for the flight search */
+    /**
+     * The starting location/airport code for the flight search.
+     * Must be a valid 3-letter IATA airport code.
+     */
     @NotNull
     @Size(min = 3, max = 3)
     private String startingLocation;
 
-    /** The destination location/airport code for the flight search */
+    /**
+     * The destination location/airport code for the flight search.
+     * Must be a valid 3-letter IATA airport code.
+     */
     @NotNull
     @Size(min = 3, max = 3)
     private String endingLocation;
 
-    /** The departure date for the flight */
+    /**
+     * The departure date for the flight.
+     * Formatted as yyyy-MM-dd for JSON serialization/deserialization.
+     */
     @JsonFormat(pattern = "yyyy-MM-dd")
     @NotNull
     private LocalDate travelDate;
-
-    /** The return date for the flight (applicable for round-trip) */
+    /**
+     * The return date for the flight (applicable for round-trip).
+     * Formatted as yyyy-MM-dd for JSON serialization/deserialization.
+     * May be null for one-way trips.
+     */
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate returnDate;
 
-    /** The number of passengers traveling */
+    /**
+     * The number of passengers traveling.
+     * Must be a positive integer.
+     */
     @NotNull
     private Integer numberOfTravelers;
 
-    /** The type of trip (e.g., "one-way", "round-trip") */
+    /**
+     * The type of trip.
+     * Expected values include "one-way" or "round-trip".
+     */
     @NotNull
     private String tripType;
 
     /**
      * Gets the starting location.
-     * 
-     * @return The starting location/airport code
+     *
+     * @return the starting location/airport code (3-letter IATA code)
      */
     public String getStartingLocation() {
         return startingLocation;
@@ -50,8 +72,9 @@ public class FlightSearchRequestDTO {
 
     /**
      * Sets the starting location.
-     * 
-     * @param startingLocation The starting location/airport code
+     *
+     * @param startingLocation the starting location/airport code (3-letter IATA
+     *                         code)
      */
     public void setStartingLocation(String startingLocation) {
         this.startingLocation = startingLocation;
@@ -59,8 +82,8 @@ public class FlightSearchRequestDTO {
 
     /**
      * Gets the ending location.
-     * 
-     * @return The ending location/airport code
+     *
+     * @return the ending location/airport code (3-letter IATA code)
      */
     public String getEndingLocation() {
         return endingLocation;
@@ -68,8 +91,8 @@ public class FlightSearchRequestDTO {
 
     /**
      * Sets the ending location.
-     * 
-     * @param endingLocation The ending location/airport code
+     *
+     * @param endingLocation the ending location/airport code (3-letter IATA code)
      */
     public void setEndingLocation(String endingLocation) {
         this.endingLocation = endingLocation;
@@ -77,8 +100,8 @@ public class FlightSearchRequestDTO {
 
     /**
      * Gets the travel date.
-     * 
-     * @return The departure date for the flight
+     *
+     * @return the departure date for the flight
      */
     public LocalDate getTravelDate() {
         return travelDate;
@@ -86,8 +109,8 @@ public class FlightSearchRequestDTO {
 
     /**
      * Sets the travel date.
-     * 
-     * @param travelDate The departure date for the flight
+     *
+     * @param travelDate the departure date for the flight
      */
     public void setTravelDate(LocalDate travelDate) {
         this.travelDate = travelDate;
@@ -95,8 +118,8 @@ public class FlightSearchRequestDTO {
 
     /**
      * Gets the return date.
-     * 
-     * @return The return date for round-trip flights
+     *
+     * @return the return date for round-trip flights, may be null for one-way trips
      */
     public LocalDate getReturnDate() {
         return returnDate;
@@ -104,8 +127,9 @@ public class FlightSearchRequestDTO {
 
     /**
      * Sets the return date.
-     * 
-     * @param returnDate The return date for round-trip flights
+     *
+     * @param returnDate the return date for round-trip flights, may be null for
+     *                   one-way trips
      */
     public void setReturnDate(LocalDate returnDate) {
         this.returnDate = returnDate;
@@ -113,8 +137,8 @@ public class FlightSearchRequestDTO {
 
     /**
      * Gets the number of travelers.
-     * 
-     * @return The number of passengers traveling
+     *
+     * @return the number of passengers traveling
      */
     public Integer getNumberOfTravelers() {
         return numberOfTravelers;
@@ -122,8 +146,8 @@ public class FlightSearchRequestDTO {
 
     /**
      * Sets the number of travelers.
-     * 
-     * @param numberOfTravelers The number of passengers traveling
+     *
+     * @param numberOfTravelers the number of passengers traveling
      */
     public void setNumberOfTravelers(Integer numberOfTravelers) {
         this.numberOfTravelers = numberOfTravelers;
@@ -131,8 +155,8 @@ public class FlightSearchRequestDTO {
 
     /**
      * Gets the trip type.
-     * 
-     * @return The type of trip (e.g., "one-way", "round-trip")
+     *
+     * @return the type of trip (e.g., "one-way", "round-trip")
      */
     public String getTripType() {
         return tripType;
@@ -140,8 +164,8 @@ public class FlightSearchRequestDTO {
 
     /**
      * Sets the trip type.
-     * 
-     * @param tripType The type of trip (e.g., "one-way", "round-trip")
+     *
+     * @param tripType the type of trip (e.g., "one-way", "round-trip")
      */
     public void setTripType(String tripType) {
         this.tripType = tripType;

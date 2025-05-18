@@ -6,7 +6,6 @@ import com.__final_backend.backend.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,7 +20,7 @@ import java.util.Optional;
 
 /**
  * Controller for authentication operations in the SkyExplorer application.
- * 
+ * <p>
  * This controller handles all authentication-related endpoints including user
  * registration,
  * login with JWT token generation, logout, and authentication status
@@ -29,12 +28,16 @@ import java.util.Optional;
  * It also provides remember-me functionality using secure cookies and
  * role-based
  * authorization checks.
- * 
+ * </p>
+ * <p>
  * The controller implements security best practices including:
- * - Secure cookie handling with HttpOnly flag
- * - JWT token authentication
- * - Remember-me functionality with token validation
- * - Role-based access control
+ * </p>
+ * <ul>
+ * <li>Secure cookie handling with HttpOnly flag</li>
+ * <li>JWT token authentication</li>
+ * <li>Remember-me functionality with token validation</li>
+ * <li>Role-based access control</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -48,12 +51,14 @@ public class AuthController {
 
   /**
    * Constructor for dependency injection of authentication components.
+   * <p>
+   * Creates a new authentication controller with the required dependencies.
+   * </p>
    * 
    * @param authenticationManager Spring Security authentication manager
-   * @param jwtTokenUtil          Utility for JWT token generation and validation
-   * @param authService           Service handling authentication operations
+   * @param jwtTokenUtil          utility for JWT token generation and validation
+   * @param authService           service handling authentication operations
    */
-  @Autowired
   public AuthController(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil,
       AuthService authService) {
     this.authenticationManager = authenticationManager;
@@ -63,11 +68,12 @@ public class AuthController {
 
   /**
    * Registers a new user in the system.
-   * 
+   * <p>
    * This endpoint creates a new user account with the provided registration
    * details.
    * It performs validation and returns appropriate error messages if requirements
    * are not met (e.g., username already exists, invalid email format).
+   * </p>
    * 
    * @param registerRequest DTO containing user registration details (username,
    *                        email, password, etc.)
@@ -97,13 +103,14 @@ public class AuthController {
 
   /**
    * Authenticates a user and issues a JWT token for authorized API access.
-   * 
+   * <p>
    * This endpoint validates user credentials, generates a JWT token upon
    * successful
    * authentication, and optionally sets a remember-me cookie for persistent
    * sessions.
    * The JWT token should be included in subsequent API requests as a Bearer
    * token.
+   * </p>
    *
    * @param loginRequest DTO containing login credentials and remember-me
    *                     preference
@@ -146,10 +153,11 @@ public class AuthController {
 
   /**
    * Logs out the current user by invalidating their authentication.
-   * 
+   * <p>
    * This endpoint clears the security context and removes any remember-me cookies
    * to terminate the user's session. After logout, the client should discard
    * the JWT token.
+   * </p>
    *
    * @param request  HTTP request for accessing cookies
    * @param response HTTP response for clearing cookies
@@ -185,13 +193,17 @@ public class AuthController {
 
   /**
    * Retrieves information about the currently authenticated user.
-   * 
+   * <p>
    * This endpoint attempts to identify the current user through either:
-   * 1. JWT token in the Authorization header
-   * 2. Remember-me cookie
-   * 
+   * </p>
+   * <ol>
+   * <li>JWT token in the Authorization header</li>
+   * <li>Remember-me cookie</li>
+   * </ol>
+   * <p>
    * It returns user details if authenticated or a 401 Unauthorized response
    * otherwise.
+   * </p>
    *
    * @param request HTTP request for accessing cookies
    * @return ResponseEntity with user details or 401 status
@@ -230,11 +242,12 @@ public class AuthController {
 
   /**
    * Checks if the currently authenticated user has a specific role.
-   * 
+   * <p>
    * This endpoint is useful for client-side authorization to conditionally
    * display UI elements based on the user's permissions.
+   * </p>
    *
-   * @param role The role name to check (e.g., "ADMIN", "USER")
+   * @param role the role name to check (e.g., "ADMIN", "USER")
    * @return ResponseEntity with boolean indicating if user has the specified role
    */
   @GetMapping("/has-role/{role}")
@@ -249,9 +262,10 @@ public class AuthController {
 
   /**
    * Data Transfer Object (DTO) for login requests.
-   * 
+   * <p>
    * This inner class encapsulates the data sent by clients when attempting to log
    * in.
+   * </p>
    */
   public static class LoginRequest {
     private String username;
@@ -288,9 +302,10 @@ public class AuthController {
 
   /**
    * Data Transfer Object (DTO) for user registration requests.
-   * 
+   * <p>
    * This inner class encapsulates the data sent by clients when registering a new
    * user.
+   * </p>
    */
   public static class RegisterRequest {
     private String username;

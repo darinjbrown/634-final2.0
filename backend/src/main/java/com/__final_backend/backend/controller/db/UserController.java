@@ -3,7 +3,6 @@ package com.__final_backend.backend.controller.db;
 import com.__final_backend.backend.entity.User;
 import com.__final_backend.backend.service.AuthService;
 import com.__final_backend.backend.service.db.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,23 +12,43 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * REST controller for user-related operations
+ * REST controller for user-related operations.
+ *
+ * <p>
+ * This controller provides endpoints for managing user accounts, including
+ * creation,
+ * retrieval, updating, and deletion. Access to these operations is restricted
+ * based on
+ * user roles and ownership of the data being accessed.
  */
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-
   private final UserService userService;
   private final AuthService authService;
 
-  @Autowired
+  /**
+   * Constructs a new UserController with required dependencies.
+   *
+   * @param userService service for user management operations
+   * @param authService service for authentication operations
+   */
   public UserController(UserService userService, AuthService authService) {
     this.userService = userService;
     this.authService = authService;
   }
 
   /**
-   * Create a new user (admin only)
+   * Creates a new user account.
+   *
+   * <p>
+   * This endpoint is restricted to administrators only. It validates that the
+   * username
+   * and email are not already in use before creating the new user account.
+   *
+   * @param user the user data for account creation
+   * @return the created user with HTTP 201 Created, or HTTP 409 Conflict if
+   *         username/email exists
    */
   @PostMapping
   @PreAuthorize("hasRole('ADMIN')")
@@ -45,7 +64,16 @@ public class UserController {
   }
 
   /**
-   * Get user by ID (admin or the user themselves)
+   * Retrieves a user by their ID.
+   *
+   * <p>
+   * This endpoint is accessible by administrators or the user themselves.
+   * The authorization is handled through a SpEL expression that checks if the
+   * current user's ID matches the requested ID.
+   *
+   * @param id the ID of the user to retrieve
+   * @return the user with HTTP 200 OK, or HTTP 404 Not Found if no user exists
+   *         with that ID
    */
   @GetMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN') or @authService.getCurrentUser().isPresent() and @authService.getCurrentUser().get().getId() == #id")
@@ -56,7 +84,12 @@ public class UserController {
   }
 
   /**
-   * Get all users (admin only)
+   * Retrieves all user accounts in the system.
+   *
+   * <p>
+   * This endpoint is restricted to administrators only.
+   *
+   * @return a list of all users with HTTP 200 OK
    */
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
@@ -66,7 +99,16 @@ public class UserController {
   }
 
   /**
-   * Get user by username (admin or the user themselves)
+   * Retrieves a user by their username.
+   *
+   * <p>
+   * This endpoint is accessible by administrators or the user themselves.
+   * Authorization is handled through a SpEL expression that checks if the
+   * current user's username matches the requested username.
+   *
+   * @param username the username of the user to retrieve
+   * @return the user with HTTP 200 OK, or HTTP 404 Not Found if no user exists
+   *         with that username
    */
   @GetMapping("/username/{username}")
   @PreAuthorize("hasRole('ADMIN') or @authService.getCurrentUser().isPresent() and @authService.getCurrentUser().get().getUsername().equals(#username)")
@@ -77,7 +119,16 @@ public class UserController {
   }
 
   /**
-   * Get user by email (admin or the user themselves)
+   * Retrieves a user by their email address.
+   *
+   * <p>
+   * This endpoint is accessible by administrators or the user themselves.
+   * Authorization is handled through a SpEL expression that checks if the
+   * current user's email matches the requested email.
+   *
+   * @param email the email address of the user to retrieve
+   * @return the user with HTTP 200 OK, or HTTP 404 Not Found if no user exists
+   *         with that email
    */
   @GetMapping("/email/{email}")
   @PreAuthorize("hasRole('ADMIN') or @authService.getCurrentUser().isPresent() and @authService.getCurrentUser().get().getEmail().equals(#email)")
@@ -88,7 +139,17 @@ public class UserController {
   }
 
   /**
-   * Update a user (admin or the user themselves)
+   * Updates an existing user account.
+   *
+   * <p>
+   * This endpoint is accessible by administrators or the user themselves.
+   * Authorization is handled through a SpEL expression that checks if the
+   * current user's ID matches the ID of the user being updated.
+   *
+   * @param id   the ID of the user to update
+   * @param user the updated user data
+   * @return the updated user with HTTP 200 OK, or HTTP 404 Not Found if no user
+   *         exists with that ID
    */
   @PutMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN') or @authService.getCurrentUser().isPresent() and @authService.getCurrentUser().get().getId() == #id")
@@ -102,7 +163,15 @@ public class UserController {
   }
 
   /**
-   * Delete a user (admin only)
+   * Deletes a user account.
+   *
+   * <p>
+   * This endpoint is restricted to administrators only. It verifies that the
+   * user exists before attempting to delete them.
+   *
+   * @param id the ID of the user to delete
+   * @return HTTP 204 No Content if successful, or HTTP 404 Not Found if no user
+   *         exists with that ID
    */
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
@@ -115,7 +184,14 @@ public class UserController {
   }
 
   /**
-   * Check if a username exists (public)
+   * Checks if a username is already in use.
+   *
+   * <p>
+   * This endpoint is publicly accessible and used primarily during
+   * registration to provide immediate feedback on username availability.
+   *
+   * @param username the username to check
+   * @return true if the username exists, false otherwise, with HTTP 200 OK
    */
   @GetMapping("/exists/username/{username}")
   public ResponseEntity<Boolean> existsByUsername(@PathVariable String username) {
@@ -124,7 +200,14 @@ public class UserController {
   }
 
   /**
-   * Check if an email exists (public)
+   * Checks if an email address is already in use.
+   *
+   * <p>
+   * This endpoint is publicly accessible and used primarily during
+   * registration to provide immediate feedback on email availability.
+   *
+   * @param email the email address to check
+   * @return true if the email exists, false otherwise, with HTTP 200 OK
    */
   @GetMapping("/exists/email/{email}")
   public ResponseEntity<Boolean> existsByEmail(@PathVariable String email) {

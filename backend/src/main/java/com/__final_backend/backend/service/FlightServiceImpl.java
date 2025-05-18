@@ -27,35 +27,41 @@ import java.util.Set;
  * Implementation of the FlightService interface that provides flight search
  * capabilities
  * by integrating with the Amadeus Flight Offers Search API.
- * 
+ * <p>
  * This service is responsible for:
- * - Creating and managing the Amadeus API client
- * - Searching for flights based on user criteria (origin, destination, dates,
+ * <ul>
+ * <li>Creating and managing the Amadeus API client
+ * <li>Searching for flights based on user criteria (origin, destination, dates,
  * etc.)
- * - Converting Amadeus API responses to application DTOs for client consumption
- * - Caching airline information to optimize API usage and improve performance
- * - Handling date/time formatting and validation
- * 
+ * <li>Converting Amadeus API responses to application DTOs for client
+ * consumption
+ * <li>Caching airline information to optimize API usage and improve performance
+ * <li>Handling date/time formatting and validation
+ * </ul>
+ * <p>
  * The service uses the Amadeus test environment which provides free access to
  * flight data
  * suitable for development and testing purposes.
  */
 @Service
 public class FlightServiceImpl implements FlightService {
-
+    /** Logger for this class. */
     private static final Logger logger = LoggerFactory.getLogger(FlightServiceImpl.class);
 
+    /** The Amadeus API key from application properties. */
     @Value("${amadeus.api.key}")
     private String apiKey;
 
+    /** The Amadeus API secret from application properties. */
     @Value("${amadeus.api.secret}")
     private String apiSecret;
 
     /**
      * Cache for airline names to reduce API calls for repeated airline codes.
+     * <p>
      * This improves performance by avoiding redundant API calls for the same
      * airline.
-     * 
+     * <p>
      * Key: Airline IATA code (e.g., "BA", "AA", "DL")
      * Value: Full airline name (e.g., "British Airways", "American Airlines",
      * "Delta Air Lines")
@@ -64,14 +70,18 @@ public class FlightServiceImpl implements FlightService {
 
     /**
      * Singleton instance of the Amadeus API client.
+     * <p>
      * Created on-demand and reused across requests for efficiency.
      */
     private Amadeus amadeusClient;
 
     /**
      * Gets or creates the Amadeus API client in a thread-safe manner.
-     * This method implements lazy initialization with double-checked locking
-     * to ensure thread safety while maintaining performance.
+     * <p>
+     * This method implements lazy initialization with synchronization
+     * to ensure thread safety while maintaining performance. The client is only
+     * created
+     * once and then reused for subsequent API calls.
      * 
      * @return Configured Amadeus client instance ready for API calls
      */
@@ -93,11 +103,14 @@ public class FlightServiceImpl implements FlightService {
 
     /**
      * Searches for flights based on the provided travel parameters.
-     * 
+     * <p>
      * This method validates input parameters, constructs the appropriate API
      * request,
      * calls the Amadeus Flight Offers Search API, and transforms the results into
      * application-specific DTOs. It includes robust error handling and logging.
+     * <p>
+     * The search is limited to non-stop flights and returns at most 20 results
+     * to optimize response time and focus on the most relevant options.
      * 
      * @param startingLocation  The 3-letter IATA code of the departure airport/city
      * @param endingLocation    The 3-letter IATA code of the arrival airport/city
@@ -169,14 +182,16 @@ public class FlightServiceImpl implements FlightService {
 
     /**
      * Converts FlightOfferSearch objects from the Amadeus API to FlightDTO objects.
-     * 
+     * <p>
      * This method transforms the complex Amadeus API response structure into a
      * simplified
      * DTO format suitable for frontend consumption. The conversion includes:
-     * 1. Extracting flight details from nested objects
-     * 2. Resolving airline codes to full airline names using the airline cache
-     * 3. Formatting departure and arrival times
-     * 4. Organizing price information
+     * <ul>
+     * <li>Extracting flight details from nested objects
+     * <li>Resolving airline codes to full airline names using the airline cache
+     * <li>Formatting departure and arrival times
+     * <li>Organizing price information
+     * </ul>
      * 
      * @param flightOffers Array of FlightOfferSearch objects from Amadeus API
      * @param amadeus      The Amadeus client for fetching airline information
@@ -228,11 +243,14 @@ public class FlightServiceImpl implements FlightService {
 
     /**
      * Fetches airline names for a set of airline codes and populates the cache.
-     * 
+     * <p>
      * This method makes batch requests to the Amadeus Airlines API to retrieve
      * airline names for the given IATA codes. Results are stored in the cache
      * to avoid redundant API calls in future requests. If an airline name
      * cannot be fetched, the code itself is used as a fallback.
+     * <p>
+     * The method checks the cache first before making any API calls to optimize
+     * performance and reduce API usage.
      * 
      * @param airlineCodes Set of airline IATA codes to fetch names for
      * @param amadeus      The Amadeus client for making API calls
@@ -262,12 +280,17 @@ public class FlightServiceImpl implements FlightService {
 
     /**
      * Extracts a formatted time string (HH:mm) from an ISO datetime string.
-     * 
+     * <p>
      * This method handles various datetime formats that might be returned by the
      * API,
      * including those with and without timezone information. It attempts multiple
      * parsing
-     * strategies and falls back to direct string extraction if parsing fails.
+     * strategies in this order:
+     * <ol>
+     * <li>Parse as ZonedDateTime (with timezone)
+     * <li>Parse as LocalDateTime (without timezone)
+     * <li>Direct substring extraction as fallback
+     * </ol>
      * 
      * @param dateTimeString The datetime string to extract time from (e.g.,
      *                       "2025-05-01T14:30:00")
@@ -295,13 +318,18 @@ public class FlightServiceImpl implements FlightService {
 
     /**
      * Advanced flight search method that accepts raw Amadeus API parameters.
-     * 
+     * <p>
      * This method provides direct access to all Amadeus API parameters for advanced
      * search scenarios not covered by the standard search method. It's particularly
      * useful for complex queries that require parameters not exposed in the
      * standard
-     * interface, such as fare family filtering, cabin class restrictions, or
-     * airline alliance preferences.
+     * interface, such as:
+     * <ul>
+     * <li>Fare family filtering
+     * <li>Cabin class restrictions
+     * <li>Airline alliance preferences
+     * <li>Complex multi-city itineraries
+     * </ul>
      * 
      * @param params Amadeus Params object containing all search parameters
      * @return Array of FlightOfferSearch objects from Amadeus API

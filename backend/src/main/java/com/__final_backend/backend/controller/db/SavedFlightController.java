@@ -7,7 +7,6 @@ import com.__final_backend.backend.service.db.SavedFlightService;
 import com.__final_backend.backend.service.db.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -23,7 +22,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * REST controller for saved flight operations
+ * REST controller for saved flight operations.
+ *
+ * <p>
+ * This controller provides endpoints for managing saved flights, including
+ * creation,
+ * retrieval, and deletion. All operations are authenticated and restricted to
+ * the
+ * owner of the saved flights.
  */
 @RestController
 @RequestMapping("/api/saved-flights")
@@ -34,17 +40,29 @@ public class SavedFlightController {
   private final SavedFlightService savedFlightService;
   private final UserService userService;
 
-  @Autowired
+  /**
+   * Constructs a new SavedFlightController with required dependencies.
+   *
+   * @param savedFlightService service for saved flight operations
+   * @param userService        service for user management operations
+   */
   public SavedFlightController(SavedFlightService savedFlightService, UserService userService) {
     this.savedFlightService = savedFlightService;
     this.userService = userService;
   }
 
   /**
-   * Save a flight for the authenticated user
-   * 
-   * @param flightDTO the flight data to save
-   * @return the saved flight data
+   * Saves a flight for the authenticated user.
+   *
+   * <p>
+   * This endpoint allows users to save flight information to their account for
+   * future reference.
+   * It requires authentication and associates the saved flight with the current
+   * user.
+   *
+   * @param flightDTO the flight data transfer object containing flight details to
+   *                  save
+   * @return ResponseEntity with saved flight data or error information
    */
   @PostMapping
   public ResponseEntity<?> saveFlight(@RequestBody SavedFlightDTO flightDTO) {
@@ -96,9 +114,14 @@ public class SavedFlightController {
   }
 
   /**
-   * Get all saved flights for the authenticated user
-   * 
-   * @return list of saved flights
+   * Retrieves all saved flights for the authenticated user.
+   *
+   * <p>
+   * This endpoint returns all flights that the current user has saved.
+   * It requires authentication and only returns flights owned by the current
+   * user.
+   *
+   * @return ResponseEntity with list of saved flights or error information
    */
   @GetMapping
   public ResponseEntity<?> getSavedFlightsForCurrentUser() {
@@ -135,11 +158,17 @@ public class SavedFlightController {
   }
 
   /**
-   * Get saved flights for the authenticated user with pagination
-   * 
-   * @param page page number
-   * @param size page size
-   * @return paged list of saved flights
+   * Retrieves saved flights for the authenticated user with pagination.
+   *
+   * <p>
+   * This endpoint returns a paginated list of saved flights for the current user.
+   * It requires authentication and only returns flights owned by the current
+   * user.
+   *
+   * @param page page number (zero-based)
+   * @param size number of items per page
+   * @return ResponseEntity with paginated list of saved flights or error
+   *         information
    */
   @GetMapping("/paged")
   public ResponseEntity<?> getPagedSavedFlightsForCurrentUser(
@@ -176,10 +205,16 @@ public class SavedFlightController {
   }
 
   /**
-   * Get a specific saved flight by ID
-   * 
-   * @param id the flight ID
-   * @return the saved flight
+   * Retrieves a specific saved flight by its ID.
+   *
+   * <p>
+   * This endpoint returns details of a specific saved flight. It requires
+   * authentication
+   * and performs an ownership check to ensure users can only access their own
+   * saved flights.
+   *
+   * @param id the saved flight ID to retrieve
+   * @return ResponseEntity with saved flight details or error information
    */
   @GetMapping("/{id}")
   public ResponseEntity<?> getSavedFlightById(@PathVariable Long id) {
@@ -221,10 +256,15 @@ public class SavedFlightController {
   }
 
   /**
-   * Delete a saved flight
-   * 
-   * @param id the flight ID to delete
-   * @return response with no content
+   * Deletes a specific saved flight by its ID.
+   *
+   * <p>
+   * This endpoint removes a previously saved flight. It requires authentication
+   * and performs an ownership check to ensure users can only delete their own
+   * saved flights.
+   *
+   * @param id the saved flight ID to delete
+   * @return ResponseEntity with no content on success or error information
    */
   @DeleteMapping("/{id}")
   public ResponseEntity<?> deleteSavedFlight(@PathVariable Long id) {
@@ -266,9 +306,14 @@ public class SavedFlightController {
   }
 
   /**
-   * Delete all saved flights for the authenticated user
-   * 
-   * @return response with no content
+   * Deletes all saved flights for the authenticated user.
+   *
+   * <p>
+   * This endpoint removes all saved flights associated with the current user.
+   * It requires authentication and only affects flights owned by the current
+   * user.
+   *
+   * @return ResponseEntity with no content on success or error information
    */
   @DeleteMapping
   public ResponseEntity<?> deleteAllSavedFlights() {
@@ -297,10 +342,14 @@ public class SavedFlightController {
   }
 
   /**
-   * Convert SavedFlight entity to SavedFlightDTO
-   * 
+   * Converts a SavedFlight entity to a SavedFlightDTO.
+   *
+   * <p>
+   * This private utility method transforms the internal entity representation
+   * to a data transfer object suitable for API responses.
+   *
    * @param savedFlight the entity to convert
-   * @return the DTO
+   * @return the corresponding DTO with flight details
    */
   private SavedFlightDTO convertToDTO(SavedFlight savedFlight) {
     SavedFlightDTO dto = new SavedFlightDTO();

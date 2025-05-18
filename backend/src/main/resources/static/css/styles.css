@@ -16,16 +16,19 @@
    Base Element Styles
    ====================================== */
 body {
-    background-color: #f5f7fa;
-    font-family: 'Roboto', Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    color: #333;
+	background-color: #f5f7fa;
+	font-family: 'Roboto', Arial, sans-serif;
+	margin: 0;
+	padding: 0;
+	color: #333;
 }
 
-h1, h2, h3, h4 {
-    color: #444;
-    text-align: center;
+h1,
+h2,
+h3,
+h4 {
+	color: #444;
+	text-align: center;
 }
 
 /* ======================================
@@ -33,60 +36,62 @@ h1, h2, h3, h4 {
    Material Design principles with subtle shadows and transitions
    ====================================== */
 .card {
-    border-radius: 12px;
-    overflow: hidden;
-    transition: box-shadow 0.3s ease;
+	border-radius: 12px;
+	overflow: hidden;
+	transition: box-shadow 0.3s ease;
 }
 
 .card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .card-header {
-    border-bottom: none;
+	border-bottom: none;
 }
 
 /* ======================================
    Form Elements and Controls
    Consistent styling for all input elements
    ====================================== */
-.form-control, .form-select {
-    padding: 0.6rem 0.75rem;
-    border: 1px solid #dfe3e8;
-    border-radius: 6px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    height: 38px;
+.form-control,
+.form-select {
+	padding: 0.6rem 0.75rem;
+	border: 1px solid #dfe3e8;
+	border-radius: 6px;
+	transition: border-color 0.3s ease, box-shadow 0.3s ease;
+	height: 38px;
 }
 
-.form-control:focus, .form-select:focus {
-    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
-    border-color: #86b7fe;
+.form-control:focus,
+.form-select:focus {
+	box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+	border-color: #86b7fe;
 }
 
 /* Fix for input groups to maintain consistent height and alignment */
 .input-group-text {
-    background-color: #f8f9fa;
-    border-color: #dfe3e8;
-    height: 38px;
-    padding: 0 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	background-color: #f8f9fa;
+	border-color: #dfe3e8;
+	height: 38px;
+	padding: 0 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 /* Icon sizing within input groups */
 .input-group .material-icons {
-    font-size: 18px !important; /* Override Material Icons default size */
-    width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	font-size: 18px !important; /* Override Material Icons default size */
+	width: 18px;
+	height: 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 /* Default icon size throughout the application */
 .material-icons {
-    font-size: 20px;
+	font-size: 20px;
 }
 
 /* ======================================
@@ -94,26 +99,26 @@ h1, h2, h3, h4 {
    Material-inspired buttons with depth and interaction feedback
    ====================================== */
 .btn-primary {
-    background-color: #1976d2; /* Material Blue 700 */
-    border-color: #1976d2;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+	background-color: #1976d2; /* Material Blue 700 */
+	border-color: #1976d2;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-    background-color: #1565c0; /* Material Blue 800 */
-    border-color: #1565c0;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+	background-color: #1565c0; /* Material Blue 800 */
+	border-color: #1565c0;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:focus {
-    box-shadow: 0 0 0 0.25rem rgba(25, 118, 210, 0.25);
+	box-shadow: 0 0 0 0.25rem rgba(25, 118, 210, 0.25);
 }
 
 .btn-primary:active {
-    background-color: #0d47a1; /* Material Blue 900 */
-    border-color: #0d47a1;
-    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+	background-color: #0d47a1; /* Material Blue 900 */
+	border-color: #0d47a1;
+	box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
 }
 
 /* ======================================
@@ -121,22 +126,22 @@ h1, h2, h3, h4 {
    Clean list styling for search results display
    ====================================== */
 .list-group-item {
-    border-left: none;
-    border-right: none;
-    padding: 1.25rem;
-    transition: background-color 0.2s ease;
+	border-left: none;
+	border-right: none;
+	padding: 1.25rem;
+	transition: background-color 0.2s ease;
 }
 
 .list-group-item:first-child {
-    border-top: none;
+	border-top: none;
 }
 
 .list-group-item:last-child {
-    border-bottom: none;
+	border-bottom: none;
 }
 
 .list-group-item:hover {
-    background-color: rgba(0, 0, 0, 0.03);
+	background-color: rgba(0, 0, 0, 0.03);
 }
 
 /* ======================================
@@ -144,14 +149,14 @@ h1, h2, h3, h4 {
    Reusable helper classes
    ====================================== */
 .hidden {
-    display: none !important;
+	display: none !important;
 }
 
 .error {
-    color: #dc3545; /* Bootstrap danger color */
-    text-align: center;
-    font-weight: bold;
-    margin-top: 10px;
+	color: #dc3545; /* Bootstrap danger color */
+	text-align: center;
+	font-weight: bold;
+	margin-top: 10px;
 }
 
 /* ======================================
@@ -159,24 +164,24 @@ h1, h2, h3, h4 {
    Custom styles for the flight results section
    ====================================== */
 #flightResults .list-group-item {
-    border-bottom: 1px solid #eee;
-    margin-bottom: 0;
+	border-bottom: 1px solid #eee;
+	margin-bottom: 0;
 }
 
 #flightResults .list-group-item:last-child {
-    border-bottom: none;
+	border-bottom: none;
 }
 
 #flightResults .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 /* ======================================
    Form Elements - Special Cases
    ====================================== */
 /* Ensure date inputs have consistent height across browsers */
-input[type="date"] {
-    height: 38px;
+input[type='date'] {
+	height: 38px;
 }

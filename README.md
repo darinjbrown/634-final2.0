@@ -6,26 +6,78 @@ SkyExplorer is a modern Java Spring Boot application that provides a comprehensi
 
 ```
 backend/                          # Spring Boot application
+├── .mvn/                         # Maven wrapper directory
 ├── src/main/java/com/__final_backend/backend/
+│   ├── BackendApplication.java   # Main application entry point
 │   ├── config/                   # Application configurations
 │   ├── controller/               # REST controllers and view controllers
 │   │   ├── admin/                # Admin-specific controllers
 │   │   ├── db/                   # Database-related controllers
+│   │   ├── AuthController.java   # Authentication controller
+│   │   ├── BookingController.java # Flight booking controller
+│   │   ├── FlightController.java # Flight search controller
+│   │   ├── GlobalExceptionHandler.java # Error handling
+│   │   └── ViewController.java   # Thymeleaf view controller
 │   ├── dto/                      # Data Transfer Objects
 │   ├── entity/                   # Database entity classes
 │   ├── repository/               # Spring Data JPA repositories
 │   ├── security/                 # Security configurations and JWT handlers
-│   ├── service/                  # Business logic and Amadeus API integration
+│   │   ├── provider/             # Authentication providers
+│   │   ├── CustomUserDetailsService.java # User details service
+│   │   ├── JwtAuthenticationEntryPoint.java # JWT error handling
+│   │   ├── JwtAuthenticationFilter.java # JWT validation filter
+│   │   ├── JwtTokenUtil.java     # JWT token utilities
+│   │   ├── RememberMeAuthenticationFilter.java # Remember me functionality
+│   │   └── SecurityHeadersFilter.java # Security headers filter
+│   ├── service/                  # Business logic and services
+│   │   ├── auth/                 # Authentication services
 │   │   ├── db/                   # Database service classes
-│   └── util/                     # Helper utilities for Amadeus API
+│   │   │   ├── BookingService.java # Booking database operations
+│   │   │   ├── FlightSearchService.java # Flight search history
+│   │   │   ├── SavedFlightService.java # Saved flight operations
+│   │   │   └── UserService.java  # User management operations
+│   │   ├── AuthService.java      # Authentication service interface
+│   │   ├── AuthServiceImpl.java  # Authentication implementation
+│   │   ├── BookingService.java   # Booking service interface
+│   │   ├── FlightService.java    # Flight service interface 
+│   │   └── FlightServiceImpl.java # Amadeus API integration
+│   └── util/                     # Helper utilities
+│       ├── AmadeusApiConnectionHelper.java # Amadeus API connectivity
+│       ├── AmadeusDebugHelper.java # Debugging utilities
+│       └── PasswordHashGenerator.java # Password encryption tool
 ├── src/main/resources/
+│   ├── application.properties    # Application configuration
 │   ├── db/migration/             # Flyway database migration scripts
-│   ├── static/                   # Static resources (CSS, JavaScript)
+│   │   ├── V1__Initial_Schema.sql # Database schema creation
+│   │   ├── V2__Initial_Data.sql  # Initial seed data
+│   │   ├── V3__Add_User_Roles.sql # User role definitions
+│   │   └── V4-6__*.sql           # Additional migrations
+│   ├── static/                   # Static resources
 │   │   ├── css/                  # Stylesheet files
 │   │   ├── js/                   # JavaScript files
+│   │   │   ├── auth.js           # Authentication scripts
+│   │   │   ├── bookings.js       # Bookings page functionality
+│   │   │   ├── csrf.js           # CSRF protection
+│   │   │   ├── login.js          # Login page functionality
+│   │   │   ├── register.js       # Registration page functionality
+│   │   │   ├── saved-flights.js  # Saved flights management
+│   │   │   └── scripts.js        # Main application scripts
 │   │   └── favicon.ico           # Application favicon
-│   └── templates/                # HTML templates
+│   ├── templates/                # HTML Thymeleaf templates
+│   │   ├── bookings.html         # Bookings page
+│   │   ├── index.html            # Main search page
+│   │   ├── login.html            # Login page
+│   │   ├── register.html         # Registration page
+│   │   └── saved-flights.html    # Saved flights page
+│   └── xml/                      # XML configuration
+│       └── users.xml             # XML-based user storage
 └── src/test/                     # Test classes
+    └── java/com/__final_backend/backend/
+        ├── config/               # Test configurations
+        └── test/                 # Test implementations
+            ├── integration/      # Integration tests
+            ├── ui/               # UI/Selenium tests
+            └── unit/             # Unit tests
 ```
 
 ## Features
