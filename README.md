@@ -2,6 +2,56 @@
 
 SkyExplorer is a modern Java Spring Boot application that provides a comprehensive flight search and booking platform. It integrates with the Amadeus API for real-time flight data and features a responsive Material UI-inspired interface built with Bootstrap 5. The application supports user management, flight searches, history tracking, and booking capabilities.
 
+## Project Requirements MVP
+
+SkyExplorer implements the following core requirements:
+
+### Functional Code
+- **Fully Operational Application**: The application is fully functional, efficient, and free of bugs, allowing users to search for flights, register accounts, log in, and book flights.
+- **Error Handling**: Comprehensive exception handling throughout the application prevents crashes and provides meaningful error messages to users.
+- **Responsive Design**: The application is designed to work on various screen sizes and devices.
+
+### Adherence to Specifications
+
+#### User Registration & Authentication
+- **User Registration**: Users can create accounts through a dedicated registration page (`/register`) that connects to the backend API.
+- **XML-based Authentication**: Supports both database and XML-based user storage through a flexible provider pattern.
+  - XML authentication stores user data in `src/main/resources/xml/users.xml`.
+  - Users can switch between providers in `application.properties` using the `app.auth.provider` setting.
+- **Login Functionality**: Secure login system with JWT token-based authentication and "Remember Me" functionality.
+- **Role-Based Access**: Different permissions for regular users and administrators.
+
+#### Flight Booking
+- **Flight Search**: Users can search for flights by specifying origin, destination, dates, and passenger count.
+- **Booking System**: Logged-in users can book flights, with booking data stored in the database.
+- **Booking Management**: Users can view their bookings.
+- **Saved Flights**: Users can save flight searches for later booking.
+
+### Efficiency of Code
+- **Modular Architecture**: The application follows object-oriented principles with clear separation of concerns:
+  - **Controller Layer**: Handles HTTP requests and responses
+  - **Service Layer**: Contains business logic and API integration
+  - **Repository Layer**: Handles database operations
+  - **Entity Layer**: Represents database objects
+  - **DTO Layer**: Data transfer objects for API communication
+- **Design Patterns**: Uses service interfaces, dependency injection, repository pattern, and provider pattern.
+- **Reusable Components**: Common functionality is abstracted into reusable utilities.
+
+### Annotations
+- **Comprehensive Documentation**: All classes and methods contain detailed Javadoc comments following Google Java Style Guide.
+- **Descriptive Comments**: In-code comments explain complex logic, business rules, and implementation details.
+- **Parameter Documentation**: Method parameters and return values are clearly documented.
+- **Exception Documentation**: Potential exceptions are documented with their causes and handling.
+
+### Unit Tests
+- **Testing Coverage**: Unit tests for key classes in the `src/test` directory.
+- **Test Categories**: 
+  - **Unit Tests**: For individual classes and methods.
+  - **Integration Tests**: For testing interactions between components.
+  - **UI Tests**: Using Selenium for testing the web interface.
+- **Test Configuration**: Separate test configurations and fixtures.
+- **Mock Objects**: Uses mocking for isolating units of code for testing.
+
 ## Project Structure
 
 ```
