@@ -2,7 +2,6 @@ package com.__final_backend.backend.config;
 
 import com.__final_backend.backend.entity.User;
 import com.__final_backend.backend.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -14,21 +13,35 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Database initializer that runs on application startup
- * Ensures that required system accounts like AdminTester are always present
+ * Database initializer that runs on application startup.
+ *
+ * <p>
+ * This component ensures that required system accounts like AdminTester are
+ * always
+ * present in the database. It runs automatically when the application starts
+ * and
+ * creates or updates necessary accounts with appropriate roles.
  */
 @Component
 public class DatabaseInitializer implements CommandLineRunner {
-
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
 
-  @Autowired
   public DatabaseInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
   }
 
+  /**
+   * Runs database initialization tasks when the application starts.
+   *
+   * <p>
+   * This method is invoked automatically by Spring Boot after application context
+   * has been created. It handles all initialization tasks that require database
+   * access.
+   *
+   * @param args Command line arguments passed to the application
+   */
   @Override
   @Transactional
   public void run(String... args) {
@@ -37,7 +50,11 @@ public class DatabaseInitializer implements CommandLineRunner {
   }
 
   /**
-   * Ensures the AdminTester account exists with admin privileges
+   * Ensures the AdminTester account exists with admin privileges.
+   *
+   * <p>
+   * This method either creates a new AdminTester account if it doesn't exist,
+   * or updates an existing one to ensure it has the correct password and roles.
    */
   private void createAdminTesterAccount() {
     String username = "AdminTester";
