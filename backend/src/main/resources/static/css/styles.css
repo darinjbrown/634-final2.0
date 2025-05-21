@@ -122,6 +122,39 @@ h4 {
 }
 
 /* ======================================
+   Save Flight Button Styles
+   ====================================== */
+.save-flight-btn {
+	transition: all 0.3s ease;
+}
+
+/* Default state button */
+.save-flight-btn.btn-outline-primary:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Saved state button */
+.save-flight-btn.btn-success {
+	background-color: #28a745;
+	border-color: #28a745;
+	box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+.save-flight-btn.btn-success:hover {
+	background-color: #218838;
+	border-color: #1e7e34;
+	transform: translateY(-1px);
+	box-shadow: 0 3px 6px rgba(40, 167, 69, 0.3);
+}
+
+/* Saving state with spinner */
+.save-flight-btn:disabled {
+	opacity: 0.8;
+	cursor: wait;
+}
+
+/* ======================================
    Flight Results List
    Clean list styling for search results display
    ====================================== */
@@ -184,4 +217,23 @@ h4 {
 /* Ensure date inputs have consistent height across browsers */
 input[type='date'] {
 	height: 38px;
+}
+
+/* Toast notification styles */
+.toast {
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	opacity: 0.95;
+	border-radius: 4px;
+}
+
+.toast.bg-success {
+	background-color: #28a745 !important;
+}
+
+.toast.bg-danger {
+	background-color: #dc3545 !important;
+}
+
+.toast.bg-info {
+	background-color: #17a2b8 !important;
 }

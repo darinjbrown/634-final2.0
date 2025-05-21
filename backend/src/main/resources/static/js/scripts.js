@@ -22,6 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Store search results for save all functionality and sorting
 	let currentSearchResults = [];
 
+	// Track flight IDs that have been successfully saved
+	let savedFlightIds = [];
+
+	// Initialize by fetching any already saved flights if user is logged in
+	if (isUserAuthenticated()) {
+		fetchUserSavedFlights().then(() => {
+			// Update any save buttons if we're already showing results
+			if (currentSearchResults.length > 0) {
+				updateSaveButtonStates();
+			}
+		});
+	}
+
 	/**
 	 * Toggle return date field visibility based on one-way or round-trip selection
 	 * Hides the return date when one-way is selected, shows it for round-trip
@@ -114,10 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
 						</div>
 					`;
 					resultsList.appendChild(listItem);
-				});
-
-				// Add event listeners to individual flight save buttons - CSP compliant
+				}); // Add event listeners to individual flight save buttons - CSP compliant
 				attachSaveButtonListeners();
+
+				// Check if any flights are already saved and update buttons accordingly
+				if (isUserAuthenticated() && savedFlightIds.length > 0) {
+					updateSaveButtonStates();
+				}
 			}
 
 			// Display the results section
@@ -220,16 +236,110 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	/**
+	 * Fetches the user's already saved flights if they are authenticated
+	 * This helps us know which flight save buttons should be shown as already saved
+	 */
+	async function fetchUserSavedFlights() {
+		try {
+			// Check if user is authenticated
+			if (!isUserAuthenticated()) {
+				return [];
+			}
+
+			// Get authentication headers
+			const headers = getAuthHeaders();
+
+			// Fetch saved flights from the API
+			const response = await fetch('/api/saved-flights', {
+				method: 'GET',
+				headers: headers,
+				credentials: 'include',
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to fetch saved flights');
+			}
+
+			const data = await response.json();
+
+			// Extract the flight IDs (or create equivalent identifiers)
+			// We'll use these to compare with search results
+			savedFlightIds = data.map((flight) => {
+				// Create a unique identifier for each saved flight
+				// This matches how we identify flights in the search results
+				return `${flight.flightNumber}-${flight.origin}-${flight.destination}-${flight.departureTime}`;
+			});
+
+			console.log('Saved flight IDs loaded:', savedFlightIds.length);
+			return data;
+		} catch (error) {
+			console.error('Error fetching saved flights:', error);
+			return [];
+		}
+	}
+
+	/**
+	 * Checks if a specific flight has already been saved by the user
+	 * @param {Object} flight - The flight to check
+	 * @returns {boolean} - Whether the flight is already saved
+	 */ function isFlightSaved(flight) {
+		// Create an identifier for this flight that can be compared to savedFlightIds
+		// Match the same format used in fetchUserSavedFlights
+		const flightId = `${flight.flightNumber}-${flight.origin}-${flight.destination}-${flight.departureTime}`;
+		return savedFlightIds.includes(flightId);
+	}
+
+	/**
+	 * Updates all flight save buttons based on whether flights are already saved
+	 */
+	function updateSaveButtonStates() {
+		document.querySelectorAll('.save-flight-btn').forEach((btn) => {
+			const index = parseInt(btn.getAttribute('data-index'));
+			const flight = currentSearchResults[index];
+
+			// If this flight is already saved, update button appearance
+			if (isFlightSaved(flight)) {
+				markButtonAsSaved(btn);
+			}
+		});
+	}
+	/**
+	 * Updates button styling to indicate a flight is saved
+	 * @param {HTMLElement} button - The save button element to update
+	 */
+	function markButtonAsSaved(button) {
+		button.innerHTML = `<i class="material-icons align-middle" style="font-size: 16px;">favorite</i> Saved`;
+		button.disabled = false; // Still allow clicking for user feedback
+		button.classList.remove('btn-outline-primary');
+		button.classList.add('btn-success');
+		// Add a data attribute to track saved state
+		button.setAttribute('data-saved', 'true');
+	}
+	/**
 	 * Handle saving an individual flight
 	 * Checks authentication status and shows login modal if not authenticated
 	 *
 	 * @param {Event} event - The click event from the save button
-	 */
-	async function handleSaveFlight(event) {
+	 */ async function handleSaveFlight(event) {
 		event.preventDefault();
+
+		// If the flight is already saved, show a notification and return
+		if (event.currentTarget.getAttribute('data-saved') === 'true') {
+			showToast('This flight is already saved!', 'info');
+			return;
+		}
+
+		// Immediately change button to saved state
+		markButtonAsSaved(event.currentTarget);
+
+		// Store the original button content to restore if there's an error
+		const originalButtonContent = event.currentTarget.innerHTML;
 
 		// Redirect to login if user is not authenticated
 		if (!isUserAuthenticated()) {
+			// Re-enable the button
+			event.currentTarget.disabled = false;
+
 			// Show login modal instead of direct page navigation
 			const bsLoginModal = new bootstrap.Modal(loginModal);
 			bsLoginModal.show();
@@ -239,21 +349,44 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Get the flight data from the currentSearchResults array
 		const index = parseInt(event.currentTarget.getAttribute('data-index'));
 		const flight = currentSearchResults[index];
-
 		try {
 			// Call the API to save the flight
 			const saveResponse = await saveFlight(flight);
 			if (saveResponse.success) {
 				// Update button appearance to indicate flight is saved
-				event.currentTarget.innerHTML = `
-					<i class="material-icons align-middle" style="font-size: 16px;">favorite</i> Saved
-				`;
-				event.currentTarget.disabled = true;
-				event.currentTarget.classList.remove('btn-outline-primary');
-				event.currentTarget.classList.add('btn-success');
+				markButtonAsSaved(event.currentTarget);
+
+				// Add the flight identifier to the saved flights array
+				const flightId = `${flight.flightNumber}-${flight.origin}-${flight.destination}-${flight.departureTime}`;
+				if (!savedFlightIds.includes(flightId)) {
+					savedFlightIds.push(flightId);
+				}
+
+				// Show success notification
+				showToast('Flight saved successfully!', 'success');
 			} else {
+				// Reset button to original state
+				event.currentTarget.innerHTML = originalButtonContent;
+				event.currentTarget.disabled = false;
+
+				// Show error notification
+				showToast(
+					saveResponse.message || 'Failed to save flight',
+					'danger'
+				);
 			}
-		} catch (error) {}
+		} catch (error) {
+			// Reset button to original state
+			event.currentTarget.innerHTML = originalButtonContent;
+			event.currentTarget.disabled = false;
+
+			// Show error notification
+			showToast(
+				'Error saving flight: ' + (error.message || 'Unknown error'),
+				'danger'
+			);
+			console.error('Error saving flight:', error);
+		}
 	}
 
 	/**
@@ -579,11 +712,71 @@ document.addEventListener('DOMContentLoaded', () => {
 	 * Appends a fixed-position container to the bottom-right corner of the page
 	 */
 	function createToastContainer() {
-		const toastContainer = document.createElement('div');
-		toastContainer.className =
-			'toast-container position-fixed bottom-0 end-0 p-3';
-		toastContainer.id = 'toastContainer';
-		document.body.appendChild(toastContainer);
+		let toastContainer = document.getElementById('toastContainer');
+		if (!toastContainer) {
+			toastContainer = document.createElement('div');
+			toastContainer.className =
+				'toast-container position-fixed bottom-0 end-0 p-3';
+			toastContainer.id = 'toastContainer';
+			document.body.appendChild(toastContainer);
+		}
+		return toastContainer;
+	}
+
+	/**
+	 * Display a toast notification to the user
+	 * @param {string} message - The message to display
+	 * @param {string} type - The type of toast: 'success', 'danger', 'warning', 'info'
+	 * @param {number} duration - How long to show the toast in milliseconds
+	 */
+	function showToast(message, type = 'primary', duration = 3000) {
+		// Create toast container if it doesn't exist
+		const toastContainer = createToastContainer();
+
+		// Create a unique ID for this toast
+		const toastId = 'toast-' + Date.now();
+
+		// Define the toast HTML
+		const toast = document.createElement('div');
+		toast.className = `toast align-items-center border-0`;
+		toast.id = toastId;
+		toast.setAttribute('role', 'alert');
+		toast.setAttribute('aria-live', 'assertive');
+		toast.setAttribute('aria-atomic', 'true');
+
+		// Set the appropriate background color based on type
+		toast.classList.add(`bg-${type}`);
+		// Light text for dark backgrounds, dark text for light backgrounds
+		const textClass = ['success', 'danger', 'primary', 'dark'].includes(
+			type
+		)
+			? 'text-white'
+			: 'text-dark';
+		toast.classList.add(textClass);
+
+		toast.innerHTML = `
+			<div class="d-flex">
+				<div class="toast-body">
+					${message}
+				</div>
+				<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+			</div>
+		`;
+
+		// Add the toast to the container
+		toastContainer.appendChild(toast);
+
+		// Initialize and show the toast
+		const bsToast = new bootstrap.Toast(toast, {
+			autohide: true,
+			delay: duration,
+		});
+		bsToast.show();
+
+		// Remove toast from DOM after it's hidden
+		toast.addEventListener('hidden.bs.toast', () => {
+			toast.remove();
+		});
 	}
 });
 
