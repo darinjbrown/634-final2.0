@@ -16,14 +16,14 @@ SkyExplorer implements the following core requirements:
 #### User Registration & Authentication
 - **User Registration**: Users can create accounts through a dedicated registration page (`/register`) that connects to the backend API.
 - **XML-based Authentication**: Supports both database and XML-based user storage through a flexible provider pattern.
-  - XML authentication stores user data in `src/main/resources/xml/users.xml`.
+  - XML authentication stores user data in `src/main/resources/xml/users.xml`.  This is the requirement and the method currently active in the properties file.
   - Users can switch between providers in `application.properties` using the `app.auth.provider` setting.
 - **Login Functionality**: Secure login system with JWT token-based authentication and "Remember Me" functionality.
 - **Role-Based Access**: Different permissions for regular users and administrators.
 
 #### Flight Booking
 - **Flight Search**: Users can search for flights by specifying origin, destination, dates, and passenger count.
-- **Booking System**: Logged-in users can book flights, with booking data stored in the database.
+- **Booking System**: Logged-in users can book flights, with booking data stored in the database. Booking is done from Saved Flights Page
 - **Booking Management**: Users can view their bookings.
 - **Saved Flights**: Users can save flight searches for later booking.
 
@@ -234,7 +234,7 @@ Ensure the following are installed on your system:
 5. Once logged in, you can access additional features like saving searches and booking flights
 
 ### Admin Access
-1. To access administrative features, log in with the following credentials:
+1. To access administrative features (admin features are planned but not part of MVP), log in with the following credentials:
    - Username: `AdminTester` (AdminTester2 in XML)
    - Password: `Test634`(Test634A in XML)
 2. After logging in as admin, you'll see an "Admin" link in the navigation bar
